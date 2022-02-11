@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "fast-mda-traceroute"
+version = "0.1.0"
+description = "An experimental multipath traceroute tool."
+authors = ["Maxime Mouchet <maxime.mouchet@lip6.fr>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/dioptra-io/fast-mda-traceroute"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+click = "^8.0.3"
+click-loglevel = "^0.4.0"
+diamond-miner = "^0.7.4"
+more-itertools = "^8.12.0"
+pycaracal = "^0.7.1"
+tabulate = "^0.8.9"
+
+[tool.poetry.dev-dependencies]
+bumpversion = "^0.6.0"
+pre-commit = "^2.17.0"
+pytest = "^7.0.1"
+pytest-cov = "^3.0.0"
+
+[tool.poetry.scripts]
+fast-mda-traceroute = 'fast_mda_traceroute.cli:main'
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

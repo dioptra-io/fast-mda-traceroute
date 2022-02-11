@@ -1,0 +1,28 @@
+name: Tests
+
+on:
+  push:
+    paths-ignore: [ '**.md' ]
+  pull_request:
+    paths-ignore: [ '**.md' ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+        python: [ '3.8', '3.9', '3.10' ]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install poetry
+          poetry install
+      - name: Tests
+        run: poetry run pytest --cov=fast_mda_traceroute --cov-report=xml
+      - uses: codecov/codecov-action@v2

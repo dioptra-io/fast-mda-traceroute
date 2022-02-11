@@ -1,0 +1,27 @@
+repos:
+- repo: https://github.com/timothycrosley/isort
+  rev: 5.10.1
+  hooks:
+  - id: isort
+    args: [--profile=black]
+
+- repo: https://github.com/psf/black
+  rev: 22.1.0
+  hooks:
+  - id: black
+
+- repo: https://gitlab.com/pycqa/flake8
+  rev: 3.9.2
+  hooks:
+  - id: flake8
+    args: [--ignore=E501]
+
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.1.0
+  hooks:
+  - id: trailing-whitespace
+    exclude_types:
+      - "markdown"
+  - id: end-of-file-fixer
+  - id: check-yaml
+  - id: check-added-large-files
