@@ -8,7 +8,7 @@
 
 `fast-mda-traceroute` is an experimental multipath traceroute tool based on [caracal][caracal]
 and [diamond-miner][diamond-miner]. It aims to provide a faster alternative to [paris-traceroute][paris-traceroute]
-and [scamper][scamper] for one-off measurements. It runs on Linux and macOS, on x86-64 and ARM64 systems.
+and [scamper][scamper] for running one-off measurements. It runs on Linux and macOS, on x86-64 and ARM64 systems.
 
 🚧 This tool is highly experimental, may not always work, and its interface is subject to change from one commit to
 another.
@@ -81,6 +81,6 @@ docker run fast-mda-traceroute --help
 
 [tests-workflow-url]: https://github.com/dioptra-io/fast-mda-traceroute/actions/workflows/pypi.yml
 
-[pypi-badge]: https://img.shields.io/pypi/v/pyfast-mda-traceroute?logo=pypi&logoColor=white
+[pypi-badge]: https://img.shields.io/pypi/v/fast-mda-traceroute?logo=pypi&logoColor=white
 
 [pypi-url]: https://pypi.org/project/fast-mda-traceroute/
