@@ -41,7 +41,7 @@ fast-mda-traceroute --help
 fast-mda-traceroute example.org
 ```
 
-`fast-mda-traceroute` outputs log messages to `stderr` and its results to `stdout`.
+`fast-mda-traceroute` outputs log messages to `stderr` and measurement results to `stdout`.
 
 ## Development
 
