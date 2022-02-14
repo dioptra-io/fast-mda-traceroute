@@ -7,7 +7,7 @@ from random import randint
 
 import click
 from click_loglevel import LogLevel
-from pycaracal import experimental, set_log_level, utilities
+from pycaracal import experimental, log_to_stderr, set_log_level, utilities
 
 from fast_mda_traceroute import __version__
 from fast_mda_traceroute.algorithms import DiamondMiner
@@ -166,17 +166,20 @@ def main(
     if version:
         print(f"fast-mda-traceroute {__version__}")
         return
+    # TODO: Use the same format as spdlog.
     logging.basicConfig(level=log_level, stream=sys.stderr)
+    log_to_stderr()
     set_log_level(log_level)
     destination_addr = resolve(destination)[0]
     logger.info(
-        "destination_addr=%s, interface=%s probing_rate=%d buffer_size=%d instance_id=%d integrity_check=%s",
+        "destination_addr=%s, interface=%s probing_rate=%d buffer_size=%d instance_id=%d integrity_check=%s version=%s",
         destination_addr,
         interface,
         probing_rate,
         buffer_size,
         instance_id,
         integrity_check,
+        __version__,
     )
     prober = experimental.Prober(
         interface, probing_rate, buffer_size, instance_id, integrity_check
@@ -195,6 +198,7 @@ def main(
     last_replies = []
     while True:
         probes = [cast_probe(x) for x in dminer.next_round(last_replies)]
+        # TODO: Log discoveries + expected probing time
         logger.info("round=%d probes=%d", dminer.current_round, len(probes))
         if not probes:
             break
