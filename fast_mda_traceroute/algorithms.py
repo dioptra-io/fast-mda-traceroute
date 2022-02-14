@@ -10,7 +10,7 @@ from diamond_miner.typing import Probe
 from more_itertools import flatten
 from pycaracal import Reply
 
-from fast_mda_traceroute.links import get_links_by_ttl, is_icmp_time_exceeded
+from fast_mda_traceroute.links import count_links_by_ttl, is_icmp_time_exceeded
 from fast_mda_traceroute.typing import IPAddress
 
 
@@ -62,11 +62,11 @@ class DiamondMiner:
             }
         else:
             replies = [x for x in self.distinct_replies() if is_icmp_time_exceeded(x)]
-            links_by_ttl = get_links_by_ttl(replies)
+            links_by_ttl = count_links_by_ttl(replies)
             flows_by_ttl = {}
-            for ttl, links in links_by_ttl.items():
+            for ttl, n_links in links_by_ttl.items():
                 # TODO: Full/Lite MDA.
-                max_flow = stopping_point(len(links) + 1, self.failure_probability)
+                max_flow = stopping_point(n_links + 1, self.failure_probability)
                 flows_by_ttl[ttl] = range(self.probes_sent[ttl], max_flow)
             # TODO: Maximum over TTL (h-1, h); cf. Diamond-Miner paper `Proposition 1`.
 

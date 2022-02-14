@@ -30,16 +30,18 @@ def format_scamper_json(
     replies_by_link = defaultdict(lambda: defaultdict(list))
     links = get_links(replies)
     for (near_ttl, far_tll, near_reply, far_reply) in links:
-        replies_by_link[near_reply.reply_src_addr][far_reply.reply_src_addr].append(
-            far_reply
-        )
+        near_addr = near_reply.reply_src_addr if near_reply else "*"
+        far_addr = far_reply.reply_src_addr if far_reply else "*"
+        replies_by_link[near_addr][far_addr].append(far_reply)
 
     nodes = []
     for node, links in replies_by_link.items():
         n = dict(addr=str(node), linkc=len(links), links=[[]])
         for link, replies in links.items():
-            lnk = dict(addr=str(link), probec=len(replies), probes=[])
+            lnk = dict(addr=str(link), probes=[])
             for reply in replies:
+                if not reply:
+                    continue
                 lnk["probes"].append(
                     dict(
                         attempt=0,
@@ -64,6 +66,7 @@ def format_scamper_json(
                         rx=dict(sec=0, usec=0),
                     )
                 )
+            lnk["probec"] = len(lnk["probes"])
             n["links"][0].append(lnk)
         nodes.append(n)
 

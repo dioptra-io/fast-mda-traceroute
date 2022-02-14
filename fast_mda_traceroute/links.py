@@ -35,3 +35,25 @@ def get_links(replies: Iterable[Reply]):
 
 def get_links_by_ttl(replies: Iterable[Reply]):
     return map_reduce(get_links(replies), lambda x: x[0])
+
+
+# TODO: Refactor get_links instead.
+def count_links_by_ttl(replies: Iterable[Reply]):
+    links = []
+    replies_by_flow = map_reduce(replies, get_flow_id)
+    for flow_id, replies in replies_by_flow.items():
+        replies_by_ttl = map_reduce(replies, lambda x: x.probe_ttl)
+        for ttl in range(min(replies_by_ttl), max(replies_by_ttl)):
+            # TODO: Discard flows with more than one reply per TTL.
+            near = replies_by_ttl.get(ttl, [None])[0]
+            if near:
+                near = near.reply_src_addr
+            far = replies_by_ttl.get(ttl, [None])[0]
+            if far:
+                far = far.reply_src_addr
+            links.append((ttl, near, far))
+    links_by_ttl = list(set(links))
+    return {
+        ttl: len({(near, far) for _, near, far in links})
+        for ttl, links in map_reduce(links_by_ttl, lambda x: x[0]).items()
+    }
