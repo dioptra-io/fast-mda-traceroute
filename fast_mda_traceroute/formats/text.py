@@ -37,11 +37,14 @@ def format_table(replies: List[Reply]) -> str:
 
 def format_traceroute(replies: List[Reply]) -> str:
     # TODO: Print min/max/std RTT?
-    destination_ttl = min(
-        x.probe_ttl
-        for x in replies
-        if is_destination_unreachable(x) or is_echo_reply(x)
-    )
+    if not replies:
+        return ""
+    destination_replies = [
+        x for x in replies if is_destination_unreachable(x) or is_echo_reply(x)
+    ]
+    destination_ttl = 255
+    if destination_replies:
+        destination_ttl = min(x.probe_ttl for x in destination_replies)
     nodes_by_ttl = defaultdict(set)
     for reply in replies:
         nodes_by_ttl[reply.probe_ttl].add(reply.reply_src_addr)
