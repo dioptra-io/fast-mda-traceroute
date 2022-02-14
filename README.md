@@ -77,9 +77,9 @@ docker run fast-mda-traceroute --help
 
 [pypi-workflow-url]: https://github.com/dioptra-io/fast-mda-traceroute/actions/workflows/pypi.yml
 
-[tests-workflow-badge]: https://img.shields.io/github/workflow/status/dioptra-io/fast-mda-traceroute/PyPI?logo=github&label=tests
+[tests-workflow-badge]: https://img.shields.io/github/workflow/status/dioptra-io/fast-mda-traceroute/Tests?logo=github&label=tests
 
-[tests-workflow-url]: https://github.com/dioptra-io/fast-mda-traceroute/actions/workflows/pypi.yml
+[tests-workflow-url]: https://github.com/dioptra-io/fast-mda-traceroute/actions/workflows/tests.yml
 
 [pypi-badge]: https://img.shields.io/pypi/v/fast-mda-traceroute?logo=pypi&logoColor=white
 
