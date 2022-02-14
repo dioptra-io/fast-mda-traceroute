@@ -7,12 +7,15 @@ from random import randint
 
 import click
 from click_loglevel import LogLevel
+from more_itertools import flatten
 from pycaracal import experimental, log_to_stderr, set_log_level, utilities
 
 from fast_mda_traceroute import __version__
 from fast_mda_traceroute.algorithms import DiamondMiner
 from fast_mda_traceroute.dns import resolve
-from fast_mda_traceroute.formatter import format_scamper_json, format_table
+from fast_mda_traceroute.formats import format_scamper_json
+from fast_mda_traceroute.formats.text import format_traceroute
+from fast_mda_traceroute.links import get_links_by_ttl
 from fast_mda_traceroute.logger import logger
 from fast_mda_traceroute.utils import cast_probe
 
@@ -203,20 +206,23 @@ def main(
         confidence,
         max_round,
     )
+
     start_time = datetime.now()
     last_replies = []
     while True:
         probes = [cast_probe(x) for x in dminer.next_round(last_replies)]
-        # TODO: Log discoveries
+        links_found = len(set(flatten(get_links_by_ttl(dminer.all_replies()).values())))
         logger.info(
-            "round=%d probes=%d expected_time=%.1fs",
+            "round=%d links_found=%d probes=%d expected_time=%.1fs",
             dminer.current_round,
+            links_found,
             len(probes),
             len(probes) / probing_rate,
         )
         if not probes:
             break
         last_replies = prober.probe(probes, wait)
+
     if format == "scamper-json":
         print(
             json.dumps(
@@ -230,9 +236,9 @@ def main(
                     wait,
                     start_time,
                     dminer.probes_sent,
-                    dminer.distinct_replies(),
+                    dminer.all_replies(),
                 )
             )
         )
     else:
-        print(format_table(dminer.distinct_replies()))
+        print(format_traceroute(dminer.all_replies()))

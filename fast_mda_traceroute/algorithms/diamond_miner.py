@@ -1,7 +1,7 @@
 from collections import defaultdict
 from ipaddress import IPv6Address
 from random import shuffle
-from typing import List, Set
+from typing import Dict, List
 
 from diamond_miner.generators import probe_generator
 from diamond_miner.mappers import SequentialFlowMapper
@@ -10,7 +10,7 @@ from diamond_miner.typing import Probe
 from more_itertools import flatten
 from pycaracal import Reply
 
-from fast_mda_traceroute.links import count_links_by_ttl, is_icmp_time_exceeded
+from fast_mda_traceroute.links import get_links_by_ttl, is_time_exceeded
 from fast_mda_traceroute.typing import IPAddress
 
 
@@ -42,11 +42,11 @@ class DiamondMiner:
         self.max_round = max_round
         # Diamond-Miner state
         self.current_round = 0
-        self.probes_sent = defaultdict(int)
-        self.replies = {}
+        self.probes_sent: Dict[int, int] = defaultdict(int)
+        self.replies: Dict[int, List[Reply]] = {}
 
-    def distinct_replies(self) -> Set[Reply]:
-        return set(flatten(self.replies.values()))
+    def all_replies(self) -> List[Reply]:
+        return list(flatten(self.replies.values()))
 
     def next_round(self, replies: List[Reply]) -> List[Probe]:
         self.current_round += 1
@@ -61,12 +61,12 @@ class DiamondMiner:
                 ttl: range(max_flow) for ttl in range(self.min_ttl, self.max_ttl + 1)
             }
         else:
-            replies = [x for x in self.distinct_replies() if is_icmp_time_exceeded(x)]
-            links_by_ttl = count_links_by_ttl(replies)
+            replies = [x for x in self.all_replies() if is_time_exceeded(x)]
+            links_by_ttl = get_links_by_ttl(replies)
             flows_by_ttl = {}
-            for ttl, n_links in links_by_ttl.items():
+            for ttl, links in links_by_ttl.items():
                 # TODO: Full/Lite MDA.
-                max_flow = stopping_point(n_links + 1, self.failure_probability)
+                max_flow = stopping_point(len(links) + 1, self.failure_probability)
                 flows_by_ttl[ttl] = range(self.probes_sent[ttl], max_flow)
             # TODO: Maximum over TTL (h-1, h); cf. Diamond-Miner paper `Proposition 1`.
 

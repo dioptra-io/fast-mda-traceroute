@@ -1,12 +1,12 @@
 from collections import defaultdict
 from datetime import datetime
-from typing import Iterable, Literal
+from ipaddress import IPv6Address
+from typing import Dict, List, Literal
 
 from pycaracal import Reply
-from tabulate import tabulate
 
 from fast_mda_traceroute import __version__
-from fast_mda_traceroute.links import get_links
+from fast_mda_traceroute.links import get_links_by_ttl
 from fast_mda_traceroute.typing import IPAddress
 
 
@@ -20,16 +20,18 @@ def format_scamper_json(
     wait: int,
     start_time: datetime,
     probes_sent: dict,
-    replies: Iterable[Reply],
+    replies: List[Reply],
 ):
     if protocol == "icmp":
         method = "icmp-echo"
     else:
         method = "udp-sport"
 
-    replies_by_link = defaultdict(lambda: defaultdict(list))
-    links = get_links(replies)
-    for (near_ttl, far_tll, near_reply, far_reply) in links:
+    replies_by_link: Dict[IPv6Address, Dict[IPv6Address, List[Reply]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
+    links = get_links_by_ttl(replies)
+    for (_, _, near_reply, far_reply) in links:
         near_addr = near_reply.reply_src_addr if near_reply else "*"
         far_addr = far_reply.reply_src_addr if far_reply else "*"
         replies_by_link[near_addr][far_addr].append(far_reply)
@@ -97,32 +99,4 @@ def format_scamper_json(
         wait_timeout=wait / 10,
         nodec=len(nodes),
         nodes=nodes,
-    )
-
-
-def format_table(replies):
-    table = []
-    for reply in sorted(replies, key=lambda x: x.probe_ttl):
-        table.append(
-            (
-                reply.probe_ttl,
-                reply.probe_src_port,
-                reply.probe_dst_port,
-                reply.probe_dst_addr.ipv4_mapped,
-                reply.reply_src_addr.ipv4_mapped,
-                f"{reply.rtt / 10}ms",
-                reply.reply_mpls_labels,
-            )
-        )
-    return tabulate(
-        table,
-        headers=(
-            "TTL",
-            "Src. port",
-            "Dst. port",
-            "Probe IP",
-            "Reply IP",
-            "RTT",
-            "MPLS label stack",
-        ),
     )
