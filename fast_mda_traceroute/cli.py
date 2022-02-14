@@ -166,10 +166,18 @@ def main(
     if version:
         print(f"fast-mda-traceroute {__version__}")
         return
-    # TODO: Use the same format as spdlog.
-    logging.basicConfig(level=log_level, stream=sys.stderr)
+
+    # Configure Python logger
+    logging.basicConfig(
+        format="[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s",
+        level=log_level,
+        stream=sys.stderr,
+    )
+
+    # Configure Caracal's C++ logger (spdlog)
     log_to_stderr()
     set_log_level(log_level)
+
     destination_addr = resolve(destination)[0]
     logger.info(
         "destination_addr=%s, interface=%s probing_rate=%d buffer_size=%d instance_id=%d integrity_check=%s version=%s",
@@ -181,6 +189,7 @@ def main(
         integrity_check,
         __version__,
     )
+
     prober = experimental.Prober(
         interface, probing_rate, buffer_size, instance_id, integrity_check
     )
@@ -198,8 +207,13 @@ def main(
     last_replies = []
     while True:
         probes = [cast_probe(x) for x in dminer.next_round(last_replies)]
-        # TODO: Log discoveries + expected probing time
-        logger.info("round=%d probes=%d", dminer.current_round, len(probes))
+        # TODO: Log discoveries
+        logger.info(
+            "round=%d probes=%d expected_time=%.1fs",
+            dminer.current_round,
+            len(probes),
+            len(probes) / probing_rate,
+        )
         if not probes:
             break
         last_replies = prober.probe(probes, wait)
