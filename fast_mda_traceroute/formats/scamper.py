@@ -1,13 +1,37 @@
-from collections import defaultdict
 from datetime import datetime
-from ipaddress import IPv6Address
-from typing import Dict, List, Literal
+from typing import List, Literal
 
+from more_itertools import map_reduce
 from pycaracal import Reply
 
 from fast_mda_traceroute import __version__
-from fast_mda_traceroute.links import get_links_by_ttl
+from fast_mda_traceroute.links import get_replies_by_link
 from fast_mda_traceroute.typing import IPAddress
+
+
+def format_reply(reply: Reply) -> dict:
+    return dict(
+        attempt=0,
+        flow_id=reply.probe_src_port,
+        replyc=1,
+        replies=[
+            dict(
+                icmp_type=reply.reply_icmp_type,
+                icmp_code=reply.reply_icmp_code,
+                icmp_q_tos=0,
+                icmp_q_ttl=reply.quoted_ttl,
+                ipid=0,
+                rtt=reply.rtt / 10,
+                rx=dict(
+                    sec=int(reply.capture_timestamp / 1e6),
+                    usec=int(reply.capture_timestamp / 1e6 % 1 * 1e6),
+                ),
+                ttl=reply.reply_ttl,
+            )
+        ],
+        ttl=reply.probe_ttl,
+        rx=dict(sec=0, usec=0),
+    )
 
 
 def format_scamper_json(
@@ -27,50 +51,22 @@ def format_scamper_json(
     else:
         method = "udp-sport"
 
-    replies_by_link: Dict[IPv6Address, Dict[IPv6Address, List[Reply]]] = defaultdict(
-        lambda: defaultdict(list)
-    )
-    links = get_links_by_ttl(replies)
-    for (_, _, near_reply, far_reply) in links:
-        near_addr = near_reply.reply_src_addr if near_reply else "*"
-        far_addr = far_reply.reply_src_addr if far_reply else "*"
-        replies_by_link[near_addr][far_addr].append(far_reply)
+    replies_by_link = get_replies_by_link(replies)
+    replies_by_link_by_node = map_reduce(replies_by_link.items(), lambda x: x[0][0])
 
-    nodes = []
-    for node, links in replies_by_link.items():
-        n = dict(addr=str(node), linkc=len(links), links=[[]])
-        for link, replies in links.items():
-            lnk = dict(addr=str(link), probes=[])
-            for reply in replies:
-                if not reply:
-                    continue
-                lnk["probes"].append(
-                    dict(
-                        attempt=0,
-                        flow_id=reply.probe_src_port,
-                        replyc=1,
-                        replies=[
-                            dict(
-                                icmp_type=reply.reply_icmp_type,
-                                icmp_code=reply.reply_icmp_code,
-                                icmp_q_tos=0,
-                                icmp_q_ttl=reply.quoted_ttl,
-                                ipid=0,
-                                rtt=reply.rtt / 10,
-                                rx=dict(
-                                    sec=int(reply.capture_timestamp / 1e6),
-                                    usec=int(reply.capture_timestamp / 1e6 % 1 * 1e6),
-                                ),
-                                ttl=reply.reply_ttl,
-                            )
-                        ],
-                        ttl=reply.probe_ttl,
-                        rx=dict(sec=0, usec=0),
-                    )
-                )
-            lnk["probec"] = len(lnk["probes"])
-            n["links"][0].append(lnk)
-        nodes.append(n)
+    sc_nodes = []
+    sc_links_count = 0
+    for node, links in replies_by_link_by_node.items():
+        sc_links = []
+        for (_, far_addr), replies in links:
+            sc_probes = [
+                format_reply(far_reply) for _, far_reply in replies if far_reply
+            ]
+            sc_links.append(
+                dict(addr=str(far_addr), probec=len(sc_probes), probes=sc_probes)
+            )
+            sc_links_count += 1
+        sc_nodes.append(dict(addr=str(node), linkc=len(sc_links), links=sc_links))
 
     return dict(
         attempts=1,
@@ -80,7 +76,7 @@ def format_scamper_json(
         dst=str(destination),
         firsthop=min_ttl,
         gaplimit=0,
-        linkc=len(links),
+        linkc=sc_links_count,
         method=method,
         probe_size=0,  # TODO
         probec=sum(probes_sent.values()),
@@ -97,6 +93,6 @@ def format_scamper_json(
         version=__version__,
         wait_probe=0,
         wait_timeout=wait / 10,
-        nodec=len(nodes),
-        nodes=nodes,
+        nodec=len(sc_nodes),
+        nodes=sc_nodes,
     )

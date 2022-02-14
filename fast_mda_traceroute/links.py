@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, List, Set
+from typing import Dict, List, Optional, Set, Tuple
 
 from more_itertools import map_reduce
 from pycaracal import Reply
@@ -53,5 +53,20 @@ def get_links_by_ttl(replies: List[Reply]) -> Dict[int, Set[Link]]:
     return links
 
 
-def get_replies_by_link(replies: List[Reply]) -> Dict[Link, List[Reply]]:
-    pass
+def get_replies_by_link(
+    replies: List[Reply],
+) -> Dict[Link, List[Tuple[Optional[Reply], Optional[Reply]]]]:
+    replies_by_link = defaultdict(list)
+    replies_by_flow = map_reduce(replies, get_flow)
+    for flow_id, replies in replies_by_flow.items():
+        replies_by_ttl = map_reduce(replies, lambda x: x.probe_ttl)
+        for ttl in range(min(replies_by_ttl), max(replies_by_ttl)):
+            # TODO: Discard flows with more than one reply per TTL.
+            near_reply = replies_by_ttl.get(ttl, [None])[0]
+            far_reply = replies_by_ttl.get(ttl, [None])[0]
+            link = (
+                near_reply.reply_src_addr if near_reply else None,
+                far_reply.reply_src_addr if far_reply else None,
+            )
+            replies_by_link[link].append((near_reply, far_reply))
+    return replies_by_link

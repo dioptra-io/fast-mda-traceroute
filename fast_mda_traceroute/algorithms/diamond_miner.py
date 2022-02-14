@@ -56,6 +56,7 @@ class DiamondMiner:
             return []
 
         if self.current_round == 1:
+            # TODO: Iteratively find the destination TTL (with a single flow?).
             max_flow = stopping_point(2, self.failure_probability)
             flows_by_ttl = {
                 ttl: range(max_flow) for ttl in range(self.min_ttl, self.max_ttl + 1)
