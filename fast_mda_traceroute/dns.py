@@ -7,4 +7,4 @@ from fast_mda_traceroute.typing import IPAddress
 
 def resolve(host) -> List[IPAddress]:
     info = getaddrinfo(host, None)
-    return list(set(ip_address(addr) for _, _, _, _, (addr, _) in info))
+    return list(set(ip_address(addr) for _, _, _, _, (addr, *_) in info))

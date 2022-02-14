@@ -1,25 +1,20 @@
+import json
 import logging
 import sys
+from datetime import datetime
 from ipaddress import ip_address
 from random import randint
-from typing import List
 
 import click
 from click_loglevel import LogLevel
-from pycaracal import (
-    Reply,
-    cast_addr,
-    experimental,
-    make_probe,
-    set_log_level,
-    utilities,
-)
+from pycaracal import experimental, set_log_level, utilities
 
 from fast_mda_traceroute import __version__
-from fast_mda_traceroute.algorithms import DiamondMinerLite
+from fast_mda_traceroute.algorithms import DiamondMiner
 from fast_mda_traceroute.dns import resolve
 from fast_mda_traceroute.formatter import format_scamper_json, format_table
 from fast_mda_traceroute.logger import logger
+from fast_mda_traceroute.utils import cast_probe
 
 
 @click.command()
@@ -52,7 +47,7 @@ from fast_mda_traceroute.logger import logger
     help="Whether to probe a single address, or the whole /24 or /64.",
 )
 @click.option(
-    "--output-format",
+    "--format",
     type=click.Choice(("text", "scamper-json")),
     default="text",
     show_default=True,
@@ -153,7 +148,7 @@ def main(
     probing_rate,
     protocol,
     destination_type,
-    output_format,
+    format,
     confidence,
     max_round,
     wait,
@@ -171,14 +166,12 @@ def main(
     if version:
         print(f"fast-mda-traceroute {__version__}")
         return
-    # TODO: Detect loop+amplification
-    # TODO: dot/graphviz output
-    logging.basicConfig(level=log_level, stream=sys.stdout)
+    logging.basicConfig(level=log_level, stream=sys.stderr)
     set_log_level(log_level)
-    destination = resolve(destination)[0]
+    destination_addr = resolve(destination)[0]
     logger.info(
-        "destination=%s, interface=%s probing_rate=%d buffer_size=%d instance_id=%d integrity_check=%s",
-        destination,
+        "destination_addr=%s, interface=%s probing_rate=%d buffer_size=%d instance_id=%d integrity_check=%s",
+        destination_addr,
         interface,
         probing_rate,
         buffer_size,
@@ -188,8 +181,8 @@ def main(
     prober = experimental.Prober(
         interface, probing_rate, buffer_size, instance_id, integrity_check
     )
-    dminer = DiamondMinerLite(
-        ip_address(destination),
+    dminer = DiamondMiner(
+        ip_address(destination_addr),
         min_ttl,
         max_ttl,
         src_port,
@@ -198,19 +191,30 @@ def main(
         confidence,
         max_round,
     )
-    all_replies: List[Reply] = []
-    replies: List[Reply] = []
+    start_time = datetime.now()
+    last_replies = []
     while True:
-        probes = [
-            make_probe(cast_addr(ip_address(addr)), src_port, dst_port, ttl, protocol)
-            for addr, src_port, dst_port, ttl, protocol in dminer.next_round(replies)
-        ]
-        logger.info("round=%d probes=%d", dminer.round, len(probes))
+        probes = [cast_probe(x) for x in dminer.next_round(last_replies)]
+        logger.info("round=%d probes=%d", dminer.current_round, len(probes))
         if not probes:
             break
-        replies = prober.probe(probes, wait)
-        all_replies.extend(replies)
-    if output_format == "scamper-json":
-        print(format_scamper_json(all_replies))
+        last_replies = prober.probe(probes, wait)
+    if format == "scamper-json":
+        print(
+            json.dumps(
+                format_scamper_json(
+                    confidence,
+                    destination_addr,
+                    protocol,
+                    min_ttl,
+                    src_port,
+                    dst_port,
+                    wait,
+                    start_time,
+                    dminer.probes_sent,
+                    dminer.distinct_replies(),
+                )
+            )
+        )
     else:
-        print(format_table(all_replies))
+        print(format_table(dminer.distinct_replies()))

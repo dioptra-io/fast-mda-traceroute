@@ -1,16 +1,20 @@
 from collections import defaultdict
 from ipaddress import IPv6Address
+from random import shuffle
+from typing import List, Set
 
-from diamond_miner.generators import probe_generator_by_flow
+from diamond_miner.generators import probe_generator
 from diamond_miner.mappers import SequentialFlowMapper
 from diamond_miner.mda import stopping_point
+from diamond_miner.typing import Probe
 from more_itertools import flatten
+from pycaracal import Reply
 
-from fast_mda_traceroute.links import filter_replies, get_links_by_ttl
+from fast_mda_traceroute.links import get_links_by_ttl, is_icmp_time_exceeded
 from fast_mda_traceroute.typing import IPAddress
 
 
-class DiamondMinerLite:
+class DiamondMiner:
     """A standalone, in-memory, version of Diamond-Miner."""
 
     def __init__(
@@ -37,31 +41,42 @@ class DiamondMinerLite:
         self.mapper_v6 = SequentialFlowMapper(prefix_size=1)
         self.max_round = max_round
         # Diamond-Miner state
-        self.round = 0
-        self.probes = defaultdict(int)
+        self.current_round = 0
+        self.probes_sent = defaultdict(int)
         self.replies = {}
 
-    def next_round(self, replies):
-        self.round += 1
-        self.replies[self.round] = replies
+    def distinct_replies(self) -> Set[Reply]:
+        return set(flatten(self.replies.values()))
 
-        if self.round > self.max_round:
+    def next_round(self, replies: List[Reply]) -> List[Probe]:
+        self.current_round += 1
+        self.replies[self.current_round] = replies
+
+        if self.current_round > self.max_round:
             return []
 
-        if self.round == 1:
-            n_flows = stopping_point(2, self.failure_probability)
-            prefix = (
-                str(self.destination),
-                self.protocol,
-                range(self.min_ttl, self.max_ttl + 1),
-            )
-            # TODO: Refactor...
-            for ttl in range(self.min_ttl, self.max_ttl + 1):
-                self.probes[ttl] += n_flows
-            return list(
-                probe_generator_by_flow(
-                    [prefix],
-                    flow_ids=range(n_flows),
+        if self.current_round == 1:
+            max_flow = stopping_point(2, self.failure_probability)
+            flows_by_ttl = {
+                ttl: range(max_flow) for ttl in range(self.min_ttl, self.max_ttl + 1)
+            }
+        else:
+            replies = [x for x in self.distinct_replies() if is_icmp_time_exceeded(x)]
+            links_by_ttl = get_links_by_ttl(replies)
+            flows_by_ttl = {}
+            for ttl, links in links_by_ttl.items():
+                # TODO: Full/Lite MDA.
+                max_flow = stopping_point(len(links) + 1, self.failure_probability)
+                flows_by_ttl[ttl] = range(self.probes_sent[ttl], max_flow)
+            # TODO: Maximum over TTL (h-1, h); cf. Diamond-Miner paper `Proposition 1`.
+
+        probes = []
+        for ttl, flows in flows_by_ttl.items():
+            probes_for_ttl = list(
+                probe_generator(
+                    [(str(self.destination), self.protocol)],
+                    flow_ids=flows,
+                    ttls=[ttl],
                     prefix_len_v4=32,
                     prefix_len_v6=128,
                     probe_src_port=self.src_port,
@@ -70,27 +85,8 @@ class DiamondMinerLite:
                     mapper_v6=self.mapper_v6,
                 )
             )
+            self.probes_sent[ttl] += len(probes_for_ttl)
+            probes.extend(probes_for_ttl)
 
-        replies = set(filter_replies(flatten(self.replies.values())))
-        links_by_ttl = get_links_by_ttl(replies)
-        probes = []
-        for ttl, links in links_by_ttl.items():
-            first_flow = self.probes[ttl]
-            # TODO: Max over ttl, ttl+1 (cf. paper).
-            last_flow = stopping_point(len(links) + 1, self.failure_probability)
-            self.probes[ttl] = last_flow
-            probes.extend(
-                list(
-                    probe_generator_by_flow(
-                        [(str(self.destination), self.protocol, [ttl])],
-                        flow_ids=range(first_flow, last_flow),
-                        prefix_len_v4=32,
-                        prefix_len_v6=128,
-                        probe_src_port=self.src_port,
-                        probe_dst_port=self.dst_port,
-                        mapper_v4=self.mapper_v4,
-                        mapper_v6=self.mapper_v6,
-                    )
-                )
-            )
+        shuffle(probes)
         return probes
