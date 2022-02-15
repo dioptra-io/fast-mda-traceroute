@@ -26,6 +26,16 @@ types-tabulate = "^0.8.5"
 [tool.poetry.scripts]
 fast-mda-traceroute = 'fast_mda_traceroute.cli:app'
 
+[tool.mypy]
+ignore_missing_imports = true
+implicit_reexport = false
+strict_equality = true
+strict_optional = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_ignores = true
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

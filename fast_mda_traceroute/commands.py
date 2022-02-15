@@ -14,10 +14,7 @@ def get_paris_traceroute_command(
     dst_port: int,
     wait: int,
 ) -> str:
-    if protocol == "icmp":
-        protocol_flag = "--icmp"
-    else:
-        protocol_flag = "--udp"
+    protocol_flag = {Protocol.ICMP: "--icmp", Protocol.UDP: "--udp"}
     cmd = [
         "paris-traceroute",
         "--algorithm",
@@ -26,7 +23,7 @@ def get_paris_traceroute_command(
         src_port,
         "--dst-port",
         dst_port,
-        protocol_flag,
+        protocol_flag[protocol],
         "--first",
         min_ttl,
         "--max-hops",
@@ -50,14 +47,11 @@ def get_scamper_command(
     dst_port: int,
     wait: int,
 ) -> str:
-    if protocol == "icmp":
-        method = "icmp-echo"
-    else:
-        method = "udp-sport"
+    method = {Protocol.ICMP: "icmp-echo", Protocol.UDP: "udp-sport"}
     tracelb_cmd = [
         "tracelb",
         "-P",
-        method,
+        method[protocol],
         "-s",
         src_port,
         "-d",
