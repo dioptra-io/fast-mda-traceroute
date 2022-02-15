@@ -70,7 +70,12 @@ def format_scamper_json(
             )
             sc_links_count += 1
         sc_nodes.append(
-            dict(addr=format_addr(node), linkc=len(sc_links), links=sc_links)
+            dict(
+                addr=format_addr(node),
+                q_ttl=1,  # TODO
+                linkc=len(sc_links),
+                links=[sc_links],
+            )
         )
 
     return dict(
@@ -97,7 +102,7 @@ def format_scamper_json(
         userid=0,
         version=__version__,
         wait_probe=0,
-        wait_timeout=wait / 10,
+        wait_timeout=wait / 1000,
         nodec=len(sc_nodes),
         nodes=sc_nodes,
     )
