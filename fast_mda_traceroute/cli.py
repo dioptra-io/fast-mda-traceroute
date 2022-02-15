@@ -12,13 +12,22 @@ from pycaracal import experimental, log_to_stderr, set_log_level, utilities
 
 from fast_mda_traceroute import __version__
 from fast_mda_traceroute.algorithms import DiamondMiner
+from fast_mda_traceroute.commands import (
+    get_paris_traceroute_command,
+    get_scamper_command,
+)
 from fast_mda_traceroute.dns import resolve
 from fast_mda_traceroute.formats import format_scamper_json
 from fast_mda_traceroute.formats.text import format_traceroute
 from fast_mda_traceroute.links import get_links_by_ttl
 from fast_mda_traceroute.logger import logger
-from fast_mda_traceroute.scamper import get_scamper_command
-from fast_mda_traceroute.typing import DestinationType, LogLevel, OutputFormat, Protocol
+from fast_mda_traceroute.typing import (
+    DestinationType,
+    EquivalentCommand,
+    LogLevel,
+    OutputFormat,
+    Protocol,
+)
 from fast_mda_traceroute.utils import cast_probe
 
 app = typer.Typer()
@@ -123,10 +132,9 @@ def main(
         LogLevel.Info.value,
         case_sensitive=False,
     ),
-    print_scamper_command: Optional[bool] = typer.Option(
+    print_command: Optional[EquivalentCommand] = typer.Option(
         None,
-        "--print-scamper-command",
-        help="Print equivalent scamper command and exit.",
+        help="Print equivalent command and exit.",
     ),
     version: Optional[bool] = typer.Option(
         None,
@@ -159,12 +167,21 @@ def main(
         __version__,
     )
 
-    if print_scamper_command:
-        print(
-            get_scamper_command(
-                destination_addr, probing_rate, protocol, src_port, dst_port, wait
-            )
+    if print_command:
+        args = (
+            destination_addr,
+            probing_rate,
+            protocol,
+            min_ttl,
+            max_ttl,
+            src_port,
+            dst_port,
+            wait,
         )
+        if print_command == EquivalentCommand.ParisTraceroute:
+            print(get_paris_traceroute_command(*args))
+        else:
+            print(get_scamper_command(*args))
         raise typer.Exit()
 
     prober = experimental.Prober(

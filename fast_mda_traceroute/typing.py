@@ -12,6 +12,11 @@ class DestinationType(Enum):
     Prefix = "prefix"
 
 
+class EquivalentCommand(Enum):
+    ParisTraceroute = "paris-traceroute"
+    Scamper = "scamper"
+
+
 class LogLevel(Enum):
     Debug = "DEBUG"
     Info = "INFO"

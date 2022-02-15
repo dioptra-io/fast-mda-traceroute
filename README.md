@@ -43,8 +43,10 @@ MacBook Air).
 fast-mda-traceroute --help
 # Multipath traceroute towards example.org with default options
 fast-mda-traceroute example.org
-# Print scamper's equivalent command
-fast-mda-traceroute --print-scamper-command example.org
+# Print paris-traceroute equivalent command
+fast-mda-traceroute --print-command=paris-traceroute example.org
+# Print scamper equivalent command
+fast-mda-traceroute --print-command=scamper example.org
 ```
 
 `fast-mda-traceroute` outputs log messages to `stderr` and measurement results to `stdout`.
