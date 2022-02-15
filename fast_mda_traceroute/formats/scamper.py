@@ -7,6 +7,7 @@ from pycaracal import Reply
 from fast_mda_traceroute import __version__
 from fast_mda_traceroute.links import get_replies_by_link
 from fast_mda_traceroute.typing import IPAddress
+from fast_mda_traceroute.utils import format_addr
 
 
 def format_reply(reply: Reply) -> dict:
@@ -63,17 +64,21 @@ def format_scamper_json(
                 format_reply(far_reply) for _, far_reply in replies if far_reply
             ]
             sc_links.append(
-                dict(addr=str(far_addr), probec=len(sc_probes), probes=sc_probes)
+                dict(
+                    addr=format_addr(far_addr), probec=len(sc_probes), probes=sc_probes
+                )
             )
             sc_links_count += 1
-        sc_nodes.append(dict(addr=str(node), linkc=len(sc_links), links=sc_links))
+        sc_nodes.append(
+            dict(addr=format_addr(node), linkc=len(sc_links), links=sc_links)
+        )
 
     return dict(
         attempts=1,
         confidence=confidence,
         sport=src_port,
         dport=dst_port,
-        dst=str(destination),
+        dst=format_addr(destination),
         firsthop=min_ttl,
         gaplimit=0,
         linkc=sc_links_count,

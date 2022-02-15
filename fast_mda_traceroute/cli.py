@@ -2,7 +2,6 @@ import json
 import logging
 import sys
 from datetime import datetime
-from enum import Enum
 from ipaddress import ip_address
 from random import randint
 from typing import Optional
@@ -18,31 +17,9 @@ from fast_mda_traceroute.formats import format_scamper_json
 from fast_mda_traceroute.formats.text import format_traceroute
 from fast_mda_traceroute.links import get_links_by_ttl
 from fast_mda_traceroute.logger import logger
+from fast_mda_traceroute.scamper import get_scamper_command
+from fast_mda_traceroute.typing import DestinationType, LogLevel, OutputFormat, Protocol
 from fast_mda_traceroute.utils import cast_probe
-
-
-class DestinationType(Enum):
-    Address = "address"
-    Prefix = "prefix"
-
-
-class LogLevel(Enum):
-    Debug = "DEBUG"
-    Info = "INFO"
-    Warning = "WARNING"
-    Error = "ERROR"
-    Critical = "CRITICAL"
-
-
-class OutputFormat(Enum):
-    ScamperJSON = "scamper-json"
-    Text = "text"
-
-
-class Protocol(Enum):
-    ICMP = "icmp"
-    UDP = "udp"
-
 
 app = typer.Typer()
 
@@ -146,6 +123,11 @@ def main(
         LogLevel.Info.value,
         case_sensitive=False,
     ),
+    print_scamper_command: Optional[bool] = typer.Option(
+        None,
+        "--print-scamper-command",
+        help="Print equivalent scamper command and exit.",
+    ),
     version: Optional[bool] = typer.Option(
         None,
         "--version",
@@ -177,6 +159,14 @@ def main(
         __version__,
     )
 
+    if print_scamper_command:
+        print(
+            get_scamper_command(
+                destination_addr, probing_rate, protocol, src_port, dst_port, wait
+            )
+        )
+        raise typer.Exit()
+
     prober = experimental.Prober(
         interface, probing_rate, buffer_size, instance_id, integrity_check
     )
@@ -207,7 +197,7 @@ def main(
             break
         last_replies = prober.probe(probes, wait)
 
-    if format == "scamper-json":
+    if format == OutputFormat.ScamperJSON:
         print(
             json.dumps(
                 format_scamper_json(

@@ -21,6 +21,8 @@ another.
 docker run ghcr.io/dioptra-io/fast-mda-traceroute --help
 ```
 
+The `latest` tag maps to the latest tagged commit and the `main` tag maps to the latest commit on the `main` branch.
+
 ### Python
 
 You can use pip, or [pipx][pipx] to install `fast-mda-traceroute` in a dedicated virtual environment:
@@ -37,8 +39,12 @@ MacBook Air).
 ## Usage
 
 ```bash
+# Show help
 fast-mda-traceroute --help
+# Multipath traceroute towards example.org with default options
 fast-mda-traceroute example.org
+# Print scamper's equivalent command
+fast-mda-traceroute --print-scamper-command example.org
 ```
 
 `fast-mda-traceroute` outputs log messages to `stderr` and measurement results to `stdout`.
