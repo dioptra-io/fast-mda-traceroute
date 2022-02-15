@@ -4,11 +4,11 @@ import sys
 from datetime import datetime
 from ipaddress import ip_address
 from random import randint
-from typing import Optional
+from typing import List, Optional
 
 import typer
 from more_itertools import flatten
-from pycaracal import experimental, log_to_stderr, set_log_level, utilities
+from pycaracal import Reply, experimental, log_to_stderr, set_log_level, utilities
 
 from fast_mda_traceroute import __version__
 from fast_mda_traceroute.algorithms import DiamondMiner
@@ -18,7 +18,7 @@ from fast_mda_traceroute.commands import (
 )
 from fast_mda_traceroute.dns import resolve
 from fast_mda_traceroute.formats import format_scamper_json
-from fast_mda_traceroute.formats.text import format_traceroute
+from fast_mda_traceroute.formats.text import format_table
 from fast_mda_traceroute.links import get_links_by_ttl
 from fast_mda_traceroute.logger import logger
 from fast_mda_traceroute.typing import (
@@ -199,10 +199,12 @@ def main(
     )
 
     start_time = datetime.now()
-    last_replies = []
+    last_replies: List[Reply] = []
     while True:
         probes = [cast_probe(x) for x in dminer.next_round(last_replies)]
-        links_found = len(set(flatten(get_links_by_ttl(dminer.all_replies()).values())))
+        links_found = len(
+            set(flatten(get_links_by_ttl(dminer.time_exceeded_replies()).values()))
+        )
         logger.info(
             "round=%d links_found=%d probes=%d expected_time=%.1fs",
             dminer.current_round,
@@ -220,16 +222,16 @@ def main(
                 format_scamper_json(
                     confidence,
                     destination_addr,
-                    protocol.value,
+                    protocol,
                     min_ttl,
                     src_port,
                     dst_port,
                     wait,
                     start_time,
                     dminer.probes_sent,
-                    dminer.all_replies(),
+                    dminer.time_exceeded_replies(),
                 )
             )
         )
     else:
-        print(format_traceroute(dminer.all_replies()))
+        print(format_table(dminer.time_exceeded_replies()))

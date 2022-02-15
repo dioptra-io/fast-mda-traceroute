@@ -48,6 +48,9 @@ class DiamondMiner:
     def all_replies(self) -> List[Reply]:
         return list(flatten(self.replies.values()))
 
+    def time_exceeded_replies(self) -> List[Reply]:
+        return [x for x in self.all_replies() if is_time_exceeded(x)]
+
     def next_round(self, replies: List[Reply]) -> List[Probe]:
         self.current_round += 1
         self.replies[self.current_round] = replies
@@ -63,8 +66,8 @@ class DiamondMiner:
                 ttl: range(max_flow) for ttl in range(self.min_ttl, self.max_ttl + 1)
             }
         else:
-            replies = [x for x in self.all_replies() if is_time_exceeded(x)]
-            links_by_ttl = get_links_by_ttl(replies)
+            # TODO: Detect loop+amplification
+            links_by_ttl = get_links_by_ttl(self.time_exceeded_replies())
             flows_by_ttl = {}
             for ttl, links in links_by_ttl.items():
                 # TODO: Full/Lite MDA; see Multilevel MDA-Lite paper.

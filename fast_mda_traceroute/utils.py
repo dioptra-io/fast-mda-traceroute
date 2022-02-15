@@ -18,4 +18,4 @@ def format_addr(addr: Optional[IPAddress]) -> str:
         return str(addr)
     if isinstance(addr, IPv6Address):
         return str(addr.ipv4_mapped or addr)
-    return str(addr)
+    return "*"
