@@ -57,7 +57,8 @@ class DiamondMiner:
 
         if self.current_round == 1:
             # TODO: Iteratively find the destination TTL (with a single flow?).
-            max_flow = stopping_point(2, self.failure_probability)
+            # max_flow = stopping_point(2, self.failure_probability)
+            max_flow = 1
             flows_by_ttl = {
                 ttl: range(max_flow) for ttl in range(self.min_ttl, self.max_ttl + 1)
             }
@@ -66,7 +67,7 @@ class DiamondMiner:
             links_by_ttl = get_links_by_ttl(replies)
             flows_by_ttl = {}
             for ttl, links in links_by_ttl.items():
-                # TODO: Full/Lite MDA.
+                # TODO: Full/Lite MDA; see Multilevel MDA-Lite paper.
                 max_flow = stopping_point(len(links) + 1, self.failure_probability)
                 flows_by_ttl[ttl] = range(self.probes_sent[ttl], max_flow)
             # TODO: Maximum over TTL (h-1, h); cf. Diamond-Miner paper `Proposition 1`.
