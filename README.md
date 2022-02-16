@@ -32,10 +32,6 @@ pipx install fast-mda-traceroute
 fast-mda-traceroute --help
 ```
 
-**Apple Silicon:** we do not (yet) provide a macOS ARM64 binary wheel for Caracal and Diamond-Miner. If you use such as
-a system you must have a C++ compiler installed and the installation time might be a little longer (~5 minutes on a M1
-MacBook Air).
-
 ## Usage
 
 ```bash
