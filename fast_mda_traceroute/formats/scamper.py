@@ -1,9 +1,9 @@
+from collections import OrderedDict
 from datetime import datetime
 from typing import List
 
 from pycaracal import Reply
 
-from fast_mda_traceroute import __version__
 from fast_mda_traceroute.links import get_replies_by_node_link
 from fast_mda_traceroute.typing import IPAddress, Protocol
 from fast_mda_traceroute.utils import format_addr
@@ -12,42 +12,48 @@ METHOD = {Protocol.ICMP: "icmp-echo", Protocol.UDP: "udp-sport"}
 
 
 def format_reply(reply) -> dict:
-    return dict(
+    return OrderedDict(
+        tx=OrderedDict(sec=0, usec=0),
+        replyc=1,
+        ttl=reply.probe_ttl,
         attempt=0,
         flowid=reply.probe_src_port,
-        replyc=1,
         replies=[
-            dict(
-                icmp_type=reply.reply_icmp_type,
-                icmp_code=reply.reply_icmp_code,
-                icmp_q_tos=0,
-                icmp_q_ttl=reply.quoted_ttl,
-                ipid=0,
-                rtt=reply.rtt / 10,
-                rx=dict(
+            OrderedDict(
+                rx=OrderedDict(
                     sec=int(reply.capture_timestamp / 1e6),
                     usec=int(reply.capture_timestamp / 1e6 % 1 * 1e6),
                 ),
                 ttl=reply.reply_ttl,
+                rtt=reply.rtt / 10,
+                ipid=0,
+                icmp_type=reply.reply_icmp_type,
+                icmp_code=reply.reply_icmp_code,
+                icmp_q_tos=0,
+                icmp_q_ttl=reply.quoted_ttl,
             )
         ],
-        ttl=reply.probe_ttl,
-        tx=dict(sec=0, usec=0),
     )
 
 
 def format_scamper_json(
     confidence: int,
-    destination: IPAddress,
+    hostname: str,
+    src_addr: IPAddress,
+    dst_addr: IPAddress,
     protocol: Protocol,
     min_ttl: int,
     src_port: int,
     dst_port: int,
     wait: int,
     start_time: datetime,
+    stop_time: datetime,
     probes_sent: dict,
     replies: List[Reply],
 ):
+    """
+    Scamper-like JSON output, with the fields in the same order.
+    """
     replies_by_node_link = get_replies_by_node_link(replies)
 
     sc_nodes = []
@@ -57,13 +63,13 @@ def format_scamper_json(
         sc_links = []
         for link_addr, replies in links.items():
             sc_probes = [format_reply(reply) for reply in replies if reply]
-            sc_link = dict(addr=format_addr(link_addr))
+            sc_link = OrderedDict(addr=format_addr(link_addr))
             if sc_probes:
                 sc_link["probes"] = sc_probes
             sc_links.append(sc_link)
             sc_link_count += 1
         sc_nodes.append(
-            dict(
+            OrderedDict(
                 addr=format_addr(node_addr),
                 q_ttl=1,  # TODO
                 linkc=len(sc_links),
@@ -71,31 +77,47 @@ def format_scamper_json(
             )
         )
 
-    return dict(
-        attempts=1,
-        confidence=confidence,
-        sport=src_port,
-        dport=dst_port,
-        dst=format_addr(destination),
-        firsthop=min_ttl,
-        gaplimit=0,
-        linkc=sc_link_count,
-        method=METHOD[protocol],
-        probe_size=0,  # TODO
-        probec=sum(probes_sent.values()),
-        probec_max=0,
-        src="0.0.0.0",  # TODO
-        start=dict(
-            ftime=f"{start_time:%y-%m-%d %H:%M:%S}",
-            sec=int(start_time.timestamp()),
-            usec=start_time.microsecond,
+    return [
+        OrderedDict(
+            type="cycle-start",
+            list_name="default",
+            id=0,
+            hostname=hostname,
+            start_time=int(start_time.timestamp()),
         ),
-        tos=0,
-        type="tracelb",
-        userid=0,
-        version=__version__,
-        wait_probe=0,
-        wait_timeout=wait / 1000,
-        nodec=len(sc_nodes),
-        nodes=sc_nodes,
-    )
+        OrderedDict(
+            type="tracelb",
+            version="0.1",  # Same as scamper
+            userid=0,
+            method=METHOD[protocol],
+            src=format_addr(src_addr),
+            dst=format_addr(dst_addr),
+            # sport=src_port,
+            # dport=dst_port,
+            start=OrderedDict(
+                sec=int(start_time.timestamp()),
+                usec=start_time.microsecond,
+                ftime=f"{start_time:%y-%m-%d %H:%M:%S}",
+            ),
+            probe_size=0,  # TODO
+            firsthop=min_ttl,
+            attempts=1,
+            confidence=confidence,
+            tos=0,
+            gaplimit=0,
+            wait_timeout=wait / 1000,
+            wait_probe=0,
+            probec=sum(probes_sent.values()),
+            probec_max=0,
+            nodec=len(sc_nodes),
+            linkc=sc_link_count,
+            nodes=sc_nodes,
+        ),
+        OrderedDict(
+            type="cycle-stop",
+            list_name="default",
+            id=0,
+            hostname=hostname,
+            start_time=int(stop_time.timestamp()),
+        ),
+    ]

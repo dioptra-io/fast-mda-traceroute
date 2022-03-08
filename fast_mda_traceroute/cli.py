@@ -1,8 +1,9 @@
 import json
 import logging
+import socket
 import sys
 from datetime import datetime
-from ipaddress import ip_address
+from ipaddress import IPv4Address, ip_address
 from random import randint
 from typing import List, Optional
 
@@ -55,7 +56,7 @@ def main(
         Protocol.ICMP.value,
         help="Protocol to use for the probe packets.",
     ),
-    destination_type: DestinationType = typer.Option(
+    _destination_type: DestinationType = typer.Option(
         DestinationType.Address.value,
         help="Whether to probe a single address, or the whole /24 or /64.",
     ),
@@ -77,7 +78,7 @@ def main(
         help="Maximum number of Diamond-Miner rounds.",
     ),
     wait: int = typer.Option(
-        200,
+        1000,
         min=0,
         metavar="MILLISECONDS",
         help="Time in milliseconds to wait for a reply.",
@@ -136,7 +137,7 @@ def main(
         None,
         help="Print equivalent command and exit.",
     ),
-    version: Optional[bool] = typer.Option(
+    _version: Optional[bool] = typer.Option(
         None,
         "--version",
         callback=version_callback,
@@ -155,10 +156,10 @@ def main(
     log_to_stderr()
     set_log_level(logging.getLevelName(log_level.value))
 
-    destination_addr = resolve(destination)[0]
+    dst_addr = ip_address(resolve(destination)[0])
     logger.info(
-        "destination_addr=%s, interface=%s probing_rate=%d buffer_size=%d instance_id=%d integrity_check=%s version=%s",
-        destination_addr,
+        "dst_addr=%s, interface=%s probing_rate=%d buffer_size=%d instance_id=%d integrity_check=%s version=%s",
+        dst_addr,
         interface,
         probing_rate,
         buffer_size,
@@ -169,7 +170,7 @@ def main(
 
     if print_command:
         args = (
-            destination_addr,
+            dst_addr,
             probing_rate,
             protocol,
             min_ttl,
@@ -188,7 +189,7 @@ def main(
         interface, probing_rate, buffer_size, instance_id, integrity_check
     )
     dminer = DiamondMiner(
-        ip_address(destination_addr),
+        dst_addr,
         min_ttl,
         max_ttl,
         src_port,
@@ -215,23 +216,32 @@ def main(
         if not probes:
             break
         last_replies = prober.probe(probes, wait)
+    stop_time = datetime.now()
 
     if format == OutputFormat.ScamperJSON:
-        print(
-            json.dumps(
-                format_scamper_json(
-                    confidence,
-                    destination_addr,
-                    protocol,
-                    min_ttl,
-                    src_port,
-                    dst_port,
-                    wait,
-                    start_time,
-                    dminer.probes_sent,
-                    dminer.time_exceeded_replies(),
-                )
-            )
+        hostname = socket.gethostname()
+
+        if isinstance(dst_addr, IPv4Address):
+            src_addr = ip_address(utilities.source_ipv4_for(interface))
+        else:
+            src_addr = ip_address(utilities.source_ipv6_for(interface))
+
+        objs = format_scamper_json(
+            confidence,
+            hostname,
+            src_addr,
+            dst_addr,
+            protocol,
+            min_ttl,
+            src_port,
+            dst_port,
+            wait,
+            start_time,
+            stop_time,
+            dminer.probes_sent,
+            dminer.time_exceeded_replies(),
         )
+        for obj in objs:
+            print(json.dumps(obj))
     else:
         print(format_table(dminer.time_exceeded_replies()))
