@@ -26,7 +26,7 @@ def format_reply(reply, initial_flow_id) -> dict:
                 ),
                 ttl=reply.reply_ttl,
                 rtt=reply.rtt / 10,
-                ipid=0,
+                ipid=reply.reply_id,
                 icmp_type=reply.reply_icmp_type,
                 icmp_code=reply.reply_icmp_code,
                 icmp_q_tos=0,
@@ -86,6 +86,10 @@ def format_scamper_json(
             )
         )
 
+    # TODO: Implement this logic in pycaracal + IPv6
+    # Minimum IPv4 + ICMP size, without the encoded TTL
+    probe_size = 20 + 10
+
     cycle_start = OrderedDict(
         type="cycle-start",
         list_name="default",
@@ -108,7 +112,7 @@ def format_scamper_json(
             usec=start_time.microsecond,
             ftime=f"{start_time:%Y-%m-%d %H:%M:%S}",
         ),
-        probe_size=0,  # TODO
+        probe_size=probe_size,
         firsthop=min_ttl,
         attempts=1,
         confidence=confidence,

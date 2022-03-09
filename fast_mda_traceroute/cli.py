@@ -158,7 +158,7 @@ def main(
 
     dst_addr = ip_address(resolve(destination)[0])
     logger.info(
-        "dst_addr=%s, interface=%s probing_rate=%d buffer_size=%d instance_id=%d integrity_check=%s version=%s",
+        "dst_addr=%s interface=%s probing_rate=%d buffer_size=%d instance_id=%d integrity_check=%s version=%s",
         dst_addr,
         interface,
         probing_rate,
