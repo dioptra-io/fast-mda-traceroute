@@ -11,13 +11,13 @@ from fast_mda_traceroute.utils import format_addr
 METHOD = {Protocol.ICMP: "icmp-echo", Protocol.UDP: "udp-sport"}
 
 
-def format_reply(reply) -> dict:
+def format_reply(reply, initial_flow_id) -> dict:
     return OrderedDict(
         tx=OrderedDict(sec=0, usec=0),
         replyc=1,
         ttl=reply.probe_ttl,
         attempt=0,
-        flowid=reply.probe_src_port,
+        flowid=reply.probe_src_port - initial_flow_id + 1,
         replies=[
             OrderedDict(
                 rx=OrderedDict(
@@ -59,10 +59,19 @@ def format_scamper_json(
     sc_nodes = []
     sc_link_count = 0
 
+    # Scamper shows a flow ID starting at 1 for ICMP probes
+    # (and uses the source port for UDP).
+    initial_flow_id = 1
+    if protocol == Protocol.ICMP:
+        initial_flow_id = src_port
+
     for node_addr, links in replies_by_node_link.items():
         sc_links = []
         for link_addr, replies in links.items():
-            sc_probes = [format_reply(reply) for reply in replies if reply]
+            sc_probes = [
+                format_reply(reply, initial_flow_id) for reply in replies if reply
+            ]
+            sc_probes = sorted(sc_probes, key=lambda x: x["flowid"])
             sc_link = OrderedDict(addr=format_addr(link_addr))
             if sc_probes:
                 sc_link["probes"] = sc_probes
@@ -77,47 +86,51 @@ def format_scamper_json(
             )
         )
 
-    return [
-        OrderedDict(
-            type="cycle-start",
-            list_name="default",
-            id=0,
-            hostname=hostname,
-            start_time=int(start_time.timestamp()),
+    cycle_start = OrderedDict(
+        type="cycle-start",
+        list_name="default",
+        id=0,
+        hostname=hostname,
+        start_time=int(start_time.timestamp()),
+    )
+
+    tracelb = OrderedDict(
+        type="tracelb",
+        version="0.1",  # Same as scamper
+        userid=0,
+        method=METHOD[protocol],
+        src=format_addr(src_addr),
+        dst=format_addr(dst_addr),
+        # sport=src_port,
+        # dport=dst_port,
+        start=OrderedDict(
+            sec=int(start_time.timestamp()),
+            usec=start_time.microsecond,
+            ftime=f"{start_time:%Y-%m-%d %H:%M:%S}",
         ),
-        OrderedDict(
-            type="tracelb",
-            version="0.1",  # Same as scamper
-            userid=0,
-            method=METHOD[protocol],
-            src=format_addr(src_addr),
-            dst=format_addr(dst_addr),
-            # sport=src_port,
-            # dport=dst_port,
-            start=OrderedDict(
-                sec=int(start_time.timestamp()),
-                usec=start_time.microsecond,
-                ftime=f"{start_time:%y-%m-%d %H:%M:%S}",
-            ),
-            probe_size=0,  # TODO
-            firsthop=min_ttl,
-            attempts=1,
-            confidence=confidence,
-            tos=0,
-            gaplimit=0,
-            wait_timeout=wait / 1000,
-            wait_probe=0,
-            probec=sum(probes_sent.values()),
-            probec_max=0,
-            nodec=len(sc_nodes),
-            linkc=sc_link_count,
-            nodes=sc_nodes,
-        ),
-        OrderedDict(
-            type="cycle-stop",
-            list_name="default",
-            id=0,
-            hostname=hostname,
-            start_time=int(stop_time.timestamp()),
-        ),
-    ]
+        probe_size=0,  # TODO
+        firsthop=min_ttl,
+        attempts=1,
+        confidence=confidence,
+        tos=0,
+        gaplimit=0,
+        wait_timeout=wait / 1000,
+        wait_probe=0,
+        probec=sum(probes_sent.values()),
+        probec_max=0,
+        nodec=len(sc_nodes),
+        linkc=sc_link_count,
+    )
+
+    if sc_nodes:
+        tracelb["nodes"] = sc_nodes
+
+    cycle_stop = OrderedDict(
+        type="cycle-stop",
+        list_name="default",
+        id=0,
+        hostname=hostname,
+        stop_time=int(stop_time.timestamp()),
+    )
+
+    return [cycle_start, tracelb, cycle_stop]
