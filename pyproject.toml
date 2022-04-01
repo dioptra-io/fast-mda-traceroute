@@ -9,7 +9,7 @@ homepage = "https://github.com/dioptra-io/fast-mda-traceroute"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-diamond-miner = "^0.8.0"
+diamond-miner = "^0.9.1"
 more-itertools = "^8.12.0"
 pycaracal = "^0.8.1"
 tabulate = "^0.8.9"
