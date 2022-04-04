@@ -1,30 +1,12 @@
 name: PyPI
-
 on:
   push:
-    branches: [ main ]
     tags: [ 'v*' ]
-    paths-ignore: [ '**.md' ]
-  pull_request:
-    paths-ignore: [ '**.md' ]
-
 jobs:
   publish:
-    name: Publish to PyPI
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: dioptra-io/publish-python-action@v1
         with:
-          python-version: '3.x'
-      - name: Install dependencies
-        run: pip install build twine
-      - name: Build package
-        run: python -m build
-      - name: Upload package
-        # Publish only when the current ref. is a tag.
-        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
-        run: python -m twine upload --skip-existing dist/*
-        env:
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+          password: ${{ secrets.PYPI_TOKEN }}
