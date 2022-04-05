@@ -1,8 +1,6 @@
 # fast-mda-traceroute
 
 [![Coverage][coverage-badge]][coverage-url]
-[![Docker Status][docker-workflow-badge]][docker-workflow-url]
-[![PyPI Status][pypi-workflow-badge]][pypi-workflow-url]
 [![Tests Status][tests-workflow-badge]][tests-workflow-url]
 [![PyPI][pypi-badge]][pypi-url]
 
@@ -72,14 +70,6 @@ docker run fast-mda-traceroute --help
 [coverage-badge]: https://img.shields.io/codecov/c/github/dioptra-io/fast-mda-traceroute?logo=codecov&logoColor=white
 
 [coverage-url]: https://codecov.io/gh/dioptra-io/fast-mda-traceroute
-
-[docker-workflow-badge]: https://img.shields.io/github/workflow/status/dioptra-io/fast-mda-traceroute/Docker?logo=github&label=docker
-
-[docker-workflow-url]: https://github.com/dioptra-io/fast-mda-traceroute/actions/workflows/docker.yml
-
-[pypi-workflow-badge]: https://img.shields.io/github/workflow/status/dioptra-io/fast-mda-traceroute/PyPI?logo=github&label=pypi
-
-[pypi-workflow-url]: https://github.com/dioptra-io/fast-mda-traceroute/actions/workflows/pypi.yml
 
 [tests-workflow-badge]: https://img.shields.io/github/workflow/status/dioptra-io/fast-mda-traceroute/Tests?logo=github&label=tests
 
