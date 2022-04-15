@@ -38,6 +38,7 @@ def format_reply(reply, initial_flow_id) -> dict:
 
 def format_scamper_json(
     confidence: int,
+    probing_rate: int,
     hostname: str,
     src_addr: IPAddress,
     dst_addr: IPAddress,
@@ -105,6 +106,7 @@ def format_scamper_json(
         method=METHOD[protocol],
         src=format_addr(src_addr),
         dst=format_addr(dst_addr),
+        # TODO: Show for UDP.
         # sport=src_port,
         # dport=dst_port,
         start=OrderedDict(
@@ -119,7 +121,7 @@ def format_scamper_json(
         tos=0,
         gaplimit=0,
         wait_timeout=wait / 1000,
-        wait_probe=0,
+        wait_probe=1000 / probing_rate,
         probec=sum(probes_sent.values()),
         probec_max=0,
         nodec=len(sc_nodes),

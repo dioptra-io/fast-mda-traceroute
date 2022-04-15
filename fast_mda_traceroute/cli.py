@@ -228,6 +228,7 @@ def main(
 
         objs = format_scamper_json(
             confidence,
+            probing_rate,
             hostname,
             src_addr,
             dst_addr,
