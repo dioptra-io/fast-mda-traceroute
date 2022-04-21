@@ -30,7 +30,7 @@ def get_paris_traceroute_command(
         "-q",
         1,
         "-w",
-        wait / 1000,
+        ceil(wait / 1000),
         dst_addr,
     ]
     return " ".join(str(x) for x in cmd)

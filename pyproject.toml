@@ -36,6 +36,15 @@ warn_return_any = true
 warn_unreachable = true
 warn_unused_ignores = true
 
+[tool.coverage.report]
+exclude_lines = [
+    "if TYPE_CHECKING:$",
+    "if __name__ == \"__main__\":$",
+    "pass$",
+    "\\s\\.\\.\\.$",
+    "raise NotImplementedError$"
+]
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
