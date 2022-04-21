@@ -4,9 +4,8 @@ from typing import List
 
 from pycaracal import Reply
 
-from fast_mda_traceroute.links import get_replies_by_node_link
-from fast_mda_traceroute.typing import IPAddress, Protocol
-from fast_mda_traceroute.utils import format_addr
+from fast_mda_traceroute.links import get_scamper_links
+from fast_mda_traceroute.typing import Protocol
 
 METHOD = {Protocol.ICMP: "icmp-echo", Protocol.UDP: "udp-sport"}
 
@@ -40,8 +39,8 @@ def format_scamper_json(
     confidence: int,
     probing_rate: int,
     hostname: str,
-    src_addr: IPAddress,
-    dst_addr: IPAddress,
+    src_addr: str,
+    dst_addr: str,
     protocol: Protocol,
     min_ttl: int,
     src_port: int,
@@ -55,8 +54,6 @@ def format_scamper_json(
     """
     Scamper-like JSON output, with the fields in the same order.
     """
-    replies_by_node_link = get_replies_by_node_link(replies)
-
     sc_nodes = []
     sc_link_count = 0
 
@@ -66,24 +63,30 @@ def format_scamper_json(
     if protocol == Protocol.ICMP:
         initial_flow_id = src_port
 
-    for node_addr, links in replies_by_node_link.items():
-        sc_links = []
-        for link_addr, replies in links.items():
-            sc_probes = [
-                format_reply(reply, initial_flow_id) for reply in replies if reply
-            ]
-            sc_probes = sorted(sc_probes, key=lambda x: x["flowid"])
-            sc_link = OrderedDict(addr=format_addr(link_addr))
-            if sc_probes:
-                sc_link["probes"] = sc_probes
-            sc_links.append(sc_link)
-            sc_link_count += 1
+    links = get_scamper_links(replies)
+    for near_addr, hops in links.items():
+        n_links = 0
+        sc_links: List[List[dict]] = []
+        for hop, far_addrs in hops.items():
+            sc_links.append([])
+            for far_addr, replies in far_addrs.items():
+                sc_probes = [
+                    format_reply(reply, initial_flow_id) for reply in replies if reply
+                ]
+                sc_probes = sorted(sc_probes, key=lambda x: x["flowid"])  # type: ignore
+                sc_link = OrderedDict(addr=far_addr or "*")
+                if sc_probes:
+                    sc_link["probes"] = sc_probes  # type: ignore
+                sc_links[-1].append(sc_link)
+                sc_link_count += 1
+                if far_addr:
+                    n_links += 1
         sc_nodes.append(
             OrderedDict(
-                addr=format_addr(node_addr),
+                addr=near_addr,
                 q_ttl=1,  # TODO
-                linkc=len(sc_links),
-                links=[sc_links],
+                linkc=n_links,
+                links=sc_links,
             )
         )
 
@@ -104,8 +107,8 @@ def format_scamper_json(
         version="0.1",  # Same as scamper
         userid=0,
         method=METHOD[protocol],
-        src=format_addr(src_addr),
-        dst=format_addr(dst_addr),
+        src=src_addr,
+        dst=dst_addr,
         # TODO: Show for UDP.
         # sport=src_port,
         # dport=dst_port,

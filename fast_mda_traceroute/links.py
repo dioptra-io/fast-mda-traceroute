@@ -1,58 +1,33 @@
 from collections import defaultdict
-from ipaddress import IPv6Address
 from typing import Dict, List, Optional, Set
 
-from more_itertools import map_reduce
 from pycaracal import Reply
 
+from fast_mda_traceroute.groupby import group_by
 from fast_mda_traceroute.typing import Flow, Link, Pair
 
 
-def is_destination_unreachable(reply: Reply) -> bool:
-    """Returns true if reply is an ICMP Destination Unreachable message."""
-    return (reply.reply_protocol == 1 and reply.reply_icmp_type == 3) or (
-        reply.reply_protocol == 58 and reply.reply_icmp_type == 1
+def group_replies_by_flow(replies: List[Reply]) -> Dict[Flow, List[Reply]]:
+    return group_by(
+        replies,
+        lambda x: (
+            x.probe_protocol,
+            x.probe_dst_addr,
+            x.probe_src_port,
+            x.probe_dst_port,
+        ),
     )
 
 
-def is_echo_reply(reply: Reply) -> bool:
-    """Returns true if reply is an ICMP Echo Reply message."""
-    return (reply.reply_protocol == 1 and reply.reply_icmp_type == 0) or (
-        reply.reply_protocol == 58 and reply.reply_icmp_type == 129
-    )
-
-
-def is_time_exceeded(reply: Reply) -> bool:
-    """Returns true if reply is an ICMP Time Exceeded message."""
-    return (reply.reply_protocol == 1 and reply.reply_icmp_type == 11) or (
-        reply.reply_protocol == 58 and reply.reply_icmp_type == 3
-    )
-
-
-def get_flow(reply: Reply) -> Flow:
-    """Returns the flow that triggered the reply."""
-    # In the case of an ICMP Echo Reply message,
-    # the probe destination address is equal to the reply source address.
-    probe_dst_addr = (
-        reply.reply_src_addr if is_echo_reply(reply) else reply.probe_dst_addr
-    )
-    return (
-        reply.probe_protocol,
-        probe_dst_addr,
-        reply.probe_src_port,
-        reply.probe_dst_port,
-    )
-
-
-def get_replies_by_flow(replies: List[Reply]) -> Dict[Flow, List[Reply]]:
-    return map_reduce(replies, get_flow)
+def group_replies_by_ttl(replies: List[Reply]) -> Dict[int, List[Reply]]:
+    return group_by(replies, lambda x: x.probe_ttl)  # type: ignore
 
 
 def get_pairs_by_flow(replies: List[Reply]) -> Dict[Flow, List[Pair]]:
-    pairs_by_flow: Dict[Flow, List[Pair]] = defaultdict(list)
-    replies_by_flow = get_replies_by_flow(replies)
+    pairs_by_flow = defaultdict(list)
+    replies_by_flow = group_replies_by_flow(replies)
     for flow, replies in replies_by_flow.items():
-        replies_by_ttl = map_reduce(replies, lambda x: x.probe_ttl)
+        replies_by_ttl = group_replies_by_ttl(replies)
         for near_ttl in range(min(replies_by_ttl), max(replies_by_ttl)):
             near_replies = replies_by_ttl.get(near_ttl, [None])
             far_replies = replies_by_ttl.get(near_ttl + 1, [None])
@@ -77,17 +52,29 @@ def get_links_by_ttl(replies: List[Reply]) -> Dict[int, Set[Link]]:
     return links_by_ttl
 
 
-def get_replies_by_node_link(
+def get_scamper_links(
     replies: List[Reply],
-) -> Dict[Optional[IPv6Address], Dict[Optional[IPv6Address], List[Optional[Reply]]]]:
+) -> Dict[str, Dict[int, Dict[Optional[str], List[Reply]]]]:
     """Data structure used in Scamper's JSON format."""
-    replies_by_node_link: Dict[
-        Optional[IPv6Address], Dict[Optional[IPv6Address], List[Optional[Reply]]]
-    ] = defaultdict(lambda: defaultdict(list))
-    pairs_by_flow = get_pairs_by_flow(replies)
-    for flow, pairs in pairs_by_flow.items():
-        for near_ttl, near_reply, far_reply in pairs:
-            near_addr = near_reply.reply_src_addr if near_reply else None
-            far_addr = far_reply.reply_src_addr if far_reply else None
-            replies_by_node_link[near_addr][far_addr].append(far_reply)
-    return replies_by_node_link
+    links: Dict[str, Dict[int, Dict[Optional[str], List[Reply]]]] = defaultdict(
+        lambda: defaultdict(lambda: defaultdict(list))
+    )
+    replies_by_flow = group_replies_by_flow(replies)
+    for flow, flow_replies in replies_by_flow.items():
+        replies_by_ttl = group_replies_by_ttl(flow_replies)
+        for near_ttl in range(min(replies_by_ttl), max(replies_by_ttl)):
+            # TODO: Handle per-packet load-balancing.
+            far_ttl = near_ttl + 1
+            near_reply = replies_by_ttl.get(near_ttl, [None])[0]
+            far_reply = replies_by_ttl.get(far_ttl, [None])[0]
+            if not near_reply:
+                continue
+            while not far_reply and far_ttl <= max(replies_by_ttl):
+                links[near_reply.reply_src_addr][far_ttl][None].append(None)
+                far_ttl += 1
+                far_reply = replies_by_ttl.get(far_ttl, [None])[0]
+            if far_reply:
+                links[near_reply.reply_src_addr][far_ttl][
+                    far_reply.reply_src_addr
+                ].append(far_reply)
+    return links

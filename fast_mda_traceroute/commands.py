@@ -1,11 +1,10 @@
 from math import ceil
 
-from fast_mda_traceroute.typing import IPAddress, Protocol
-from fast_mda_traceroute.utils import format_addr
+from fast_mda_traceroute.typing import Protocol
 
 
 def get_paris_traceroute_command(
-    destination: IPAddress,
+    dst_addr: str,
     probing_rate: int,
     protocol: Protocol,
     min_ttl: int,
@@ -32,13 +31,13 @@ def get_paris_traceroute_command(
         1,
         "-w",
         wait / 1000,
-        format_addr(destination),
+        dst_addr,
     ]
     return " ".join(str(x) for x in cmd)
 
 
 def get_scamper_command(
-    destination: IPAddress,
+    dst_addr: str,
     probing_rate: int,
     protocol: Protocol,
     min_ttl: int,
@@ -62,7 +61,7 @@ def get_scamper_command(
         1,
         "-w",
         ceil(wait / 1000),
-        format_addr(destination),
+        dst_addr,
     ]
     tracelb_cmd_s = " ".join(str(x) for x in tracelb_cmd)
     scamper_cmd = [

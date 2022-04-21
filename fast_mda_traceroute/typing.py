@@ -1,17 +1,22 @@
 from enum import Enum
-from ipaddress import IPv4Address, IPv6Address
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
 from pycaracal import Reply
 
-Flow = Tuple[int, IPv6Address, int, int]
+Flow = Tuple[int, str, int, int]
 """The 4-tuple that influences the flow ID in per-flow load-balancing."""
-IPAddress = Union[IPv4Address, IPv6Address]
-"""An IPv4 or IPv6 address."""
-Link = Tuple[int, Optional[IPv6Address], Optional[IPv6Address]]
+
+Link = Tuple[int, Optional[str], Optional[str]]
 """A pair of IP address between two consecutive TTLs, for the same flow ID."""
+
 Pair = Tuple[int, Optional[Reply], Optional[Reply]]
 """A pair of replies between two consecutive TTLs, for the same flow ID."""
+
+
+class AddressFamily(Enum):
+    Any = "any"
+    IPv4 = "4"
+    IPv6 = "6"
 
 
 class DestinationType(Enum):
@@ -34,7 +39,8 @@ class LogLevel(Enum):
 
 class OutputFormat(Enum):
     ScamperJSON = "scamper-json"
-    Text = "text"
+    Table = "table"
+    Traceroute = "traceroute"
 
 
 class Protocol(Enum):

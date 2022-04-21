@@ -4,7 +4,7 @@ from typer.testing import CliRunner
 from fast_mda_traceroute.cli import app
 
 
-@pytest.mark.parametrize("format", ["text", "scamper-json"])
+@pytest.mark.parametrize("format", ["table", "traceroute", "scamper-json"])
 def test_cli_text(format):
     runner = CliRunner()
     result = runner.invoke(

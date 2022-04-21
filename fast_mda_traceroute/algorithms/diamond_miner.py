@@ -1,5 +1,4 @@
 from collections import defaultdict
-from ipaddress import IPv6Address
 from random import shuffle
 from typing import Dict, List
 
@@ -10,8 +9,8 @@ from diamond_miner.typing import Probe
 from more_itertools import flatten
 from pycaracal import Reply
 
-from fast_mda_traceroute.links import get_links_by_ttl, is_time_exceeded
-from fast_mda_traceroute.typing import IPAddress
+from fast_mda_traceroute.links import get_links_by_ttl
+from fast_mda_traceroute.utils import is_ipv4
 
 
 class DiamondMiner:
@@ -19,7 +18,7 @@ class DiamondMiner:
 
     def __init__(
         self,
-        destination: IPAddress,
+        dst_addr: str,
         min_ttl: int,
         max_ttl: int,
         src_port: int,
@@ -28,10 +27,10 @@ class DiamondMiner:
         confidence: int,
         max_round: int,
     ):
-        if protocol == "icmp" and isinstance(destination, IPv6Address):
+        if protocol == "icmp" and not is_ipv4(dst_addr):
             protocol = "icmp6"
         self.failure_probability = 1 - (confidence / 100)
-        self.destination = destination
+        self.dst_addr = dst_addr
         self.min_ttl = min_ttl
         self.max_ttl = max_ttl
         self.src_port = src_port
@@ -49,7 +48,7 @@ class DiamondMiner:
         return list(flatten(self.replies.values()))
 
     def time_exceeded_replies(self) -> List[Reply]:
-        return [x for x in self.all_replies() if is_time_exceeded(x)]
+        return [x for x in self.all_replies() if x.time_exceeded]
 
     def next_round(self, replies: List[Reply]) -> List[Probe]:
         self.current_round += 1
@@ -79,7 +78,7 @@ class DiamondMiner:
         for ttl, flows in flows_by_ttl.items():
             probes_for_ttl = list(
                 probe_generator(
-                    [(str(self.destination), self.protocol)],
+                    [(self.dst_addr, self.protocol)],
                     flow_ids=flows,
                     ttls=[ttl],
                     prefix_len_v4=32,

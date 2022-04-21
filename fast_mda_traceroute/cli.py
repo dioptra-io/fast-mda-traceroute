@@ -3,13 +3,13 @@ import logging
 import socket
 import sys
 from datetime import datetime
-from ipaddress import IPv4Address, ip_address
 from random import randint
 from typing import List, Optional
 
+import pycaracal
 import typer
 from more_itertools import flatten
-from pycaracal import Reply, experimental, log_to_stderr, set_log_level, utilities
+from pycaracal import Probe, Reply, experimental, utilities
 
 from fast_mda_traceroute import __version__
 from fast_mda_traceroute.algorithms import DiamondMiner
@@ -19,19 +19,26 @@ from fast_mda_traceroute.commands import (
 )
 from fast_mda_traceroute.dns import resolve
 from fast_mda_traceroute.formats import format_scamper_json
-from fast_mda_traceroute.formats.text import format_table
+from fast_mda_traceroute.formats.table import format_table
+from fast_mda_traceroute.formats.traceroute import format_traceroute
 from fast_mda_traceroute.links import get_links_by_ttl
 from fast_mda_traceroute.logger import logger
 from fast_mda_traceroute.typing import (
+    AddressFamily,
     DestinationType,
     EquivalentCommand,
     LogLevel,
     OutputFormat,
     Protocol,
 )
-from fast_mda_traceroute.utils import cast_probe
+from fast_mda_traceroute.utils import is_ipv4
 
 app = typer.Typer()
+
+eq_command_fns = {
+    EquivalentCommand.ParisTraceroute: get_paris_traceroute_command,
+    EquivalentCommand.Scamper: get_scamper_command,
+}
 
 
 def version_callback(value: bool):
@@ -42,6 +49,9 @@ def version_callback(value: bool):
 
 @app.command()
 def main(
+    af: AddressFamily = typer.Option(
+        AddressFamily.Any.value, help="IP version to use."
+    ),
     interface: str = typer.Option(
         utilities.get_default_interface(),
         metavar="INTERFACE",
@@ -59,9 +69,9 @@ def main(
     _destination_type: DestinationType = typer.Option(
         DestinationType.Address.value,
         help="Whether to probe a single address, or the whole /24 or /64.",
-    ),
+    ),  # TODO: Implement.
     format: OutputFormat = typer.Option(
-        OutputFormat.Text.value,
+        OutputFormat.Table.value,
         help="Output format.",
     ),
     confidence: int = typer.Option(
@@ -147,18 +157,28 @@ def main(
 ):
     # Configure Python logger
     logging.basicConfig(
-        format="[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s",
+        format="[%(asctime)s] %(message)s",
         level=log_level.value,
         stream=sys.stderr,
     )
 
     # Configure Caracal's C++ logger (spdlog)
-    log_to_stderr()
-    set_log_level(logging.getLevelName(log_level.value))
+    pycaracal.log_to_stderr()
+    pycaracal.set_log_level(logging.getLevelName(log_level.value))
+    pycaracal.set_log_format("[%Y-%m-%d %H:%M:%S,%e] %v")
 
-    dst_addr = ip_address(resolve(destination)[0])
+    dst_addr = resolve(destination, af)[0]
+    hostname = socket.gethostname()
+
+    if is_ipv4(dst_addr):
+        src_addr = utilities.source_ipv4_for(interface)
+    else:
+        src_addr = utilities.source_ipv6_for(interface)
+
     logger.info(
-        "dst_addr=%s interface=%s probing_rate=%d buffer_size=%d instance_id=%d integrity_check=%s version=%s",
+        "hostname=%s src_addr=%s dst_addr=%s interface=%s probing_rate=%d buffer_size=%d instance_id=%d integrity_check=%s version=%s",
+        hostname,
+        src_addr,
         dst_addr,
         interface,
         probing_rate,
@@ -169,7 +189,8 @@ def main(
     )
 
     if print_command:
-        args = (
+        eq_command_fn = eq_command_fns[print_command]
+        eq_command = eq_command_fn(
             dst_addr,
             probing_rate,
             protocol,
@@ -179,10 +200,7 @@ def main(
             dst_port,
             wait,
         )
-        if print_command == EquivalentCommand.ParisTraceroute:
-            print(get_paris_traceroute_command(*args))
-        else:
-            print(get_scamper_command(*args))
+        print(eq_command)
         raise typer.Exit()
 
     prober = experimental.Prober(
@@ -202,7 +220,7 @@ def main(
     start_time = datetime.now()
     last_replies: List[Reply] = []
     while True:
-        probes = [cast_probe(x) for x in dminer.next_round(last_replies)]
+        probes = [Probe(*x) for x in dminer.next_round(last_replies)]
         links_found = len(
             set(flatten(get_links_by_ttl(dminer.time_exceeded_replies()).values()))
         )
@@ -219,13 +237,6 @@ def main(
     stop_time = datetime.now()
 
     if format == OutputFormat.ScamperJSON:
-        hostname = socket.gethostname()
-
-        if isinstance(dst_addr, IPv4Address):
-            src_addr = ip_address(utilities.source_ipv4_for(interface))
-        else:
-            src_addr = ip_address(utilities.source_ipv6_for(interface))
-
         objs = format_scamper_json(
             confidence,
             probing_rate,
@@ -244,5 +255,7 @@ def main(
         )
         for obj in objs:
             print(json.dumps(obj))
-    else:
+    elif format == OutputFormat.Table:
         print(format_table(dminer.time_exceeded_replies()))
+    else:
+        print(format_traceroute(dminer.time_exceeded_replies()))
