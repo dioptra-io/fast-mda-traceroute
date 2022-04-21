@@ -1,14 +1,14 @@
 from collections import defaultdict
 from typing import Dict, List, Optional, Set
 
+from more_itertools import map_reduce
 from pycaracal import Reply
 
-from fast_mda_traceroute.groupby import group_by
 from fast_mda_traceroute.typing import Flow, Link, Pair
 
 
 def group_replies_by_flow(replies: List[Reply]) -> Dict[Flow, List[Reply]]:
-    return group_by(
+    return map_reduce(
         replies,
         lambda x: (
             x.probe_protocol,
@@ -20,7 +20,7 @@ def group_replies_by_flow(replies: List[Reply]) -> Dict[Flow, List[Reply]]:
 
 
 def group_replies_by_ttl(replies: List[Reply]) -> Dict[int, List[Reply]]:
-    return group_by(replies, lambda x: x.probe_ttl)  # type: ignore
+    return map_reduce(replies, lambda x: x.probe_ttl)  # type: ignore
 
 
 def get_pairs_by_flow(replies: List[Reply]) -> Dict[Flow, List[Pair]]:
