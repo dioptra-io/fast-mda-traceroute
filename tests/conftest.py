@@ -11,7 +11,7 @@ def make_reply():
         probe_dst_port: int,
         probe_ttl: int,
         reply_src_addr: str,
-    ):
+    ) -> Reply:
         reply = Reply()
         reply.probe_protocol = probe_protocol
         reply.probe_dst_addr = probe_dst_addr
