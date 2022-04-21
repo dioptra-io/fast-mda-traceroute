@@ -8,20 +8,17 @@ from typing import List, Optional
 
 import pycaracal
 import typer
-from more_itertools import flatten
 from pycaracal import Probe, Reply, experimental, utilities
 
 from fast_mda_traceroute import __version__
 from fast_mda_traceroute.algorithms import DiamondMiner
-from fast_mda_traceroute.commands import (
-    get_paris_traceroute_command,
-    get_scamper_command,
-)
+from fast_mda_traceroute.commands import paris_traceroute_command, scamper_command
 from fast_mda_traceroute.dns import resolve
-from fast_mda_traceroute.formats import format_scamper_json
-from fast_mda_traceroute.formats.table import format_table
-from fast_mda_traceroute.formats.traceroute import format_traceroute
-from fast_mda_traceroute.links import get_links_by_ttl
+from fast_mda_traceroute.formats import (
+    format_scamper_json,
+    format_table,
+    format_traceroute,
+)
 from fast_mda_traceroute.logger import logger
 from fast_mda_traceroute.typing import (
     AddressFamily,
@@ -36,8 +33,8 @@ from fast_mda_traceroute.utils import is_ipv4
 app = typer.Typer()
 
 eq_command_fns = {
-    EquivalentCommand.ParisTraceroute: get_paris_traceroute_command,
-    EquivalentCommand.Scamper: get_scamper_command,
+    EquivalentCommand.ParisTraceroute: paris_traceroute_command,
+    EquivalentCommand.Scamper: scamper_command,
 }
 
 
@@ -206,7 +203,7 @@ def main(
     prober = experimental.Prober(
         interface, probing_rate, buffer_size, instance_id, integrity_check
     )
-    dminer = DiamondMiner(
+    alg = DiamondMiner(
         dst_addr,
         min_ttl,
         max_ttl,
@@ -220,14 +217,11 @@ def main(
     start_time = datetime.now()
     last_replies: List[Reply] = []
     while True:
-        probes = [Probe(*x) for x in dminer.next_round(last_replies)]
-        links_found = len(
-            set(flatten(get_links_by_ttl(dminer.time_exceeded_replies()).values()))
-        )
+        probes = [Probe(*x) for x in alg.next_round(last_replies)]
         logger.info(
             "round=%d links_found=%d probes=%d expected_time=%.1fs",
-            dminer.current_round,
-            links_found,
+            alg.current_round,
+            len(alg.links),
             len(probes),
             len(probes) / probing_rate,
         )
@@ -250,12 +244,12 @@ def main(
             wait,
             start_time,
             stop_time,
-            dminer.probes_sent,
-            dminer.time_exceeded_replies(),
+            alg.probes_sent,
+            alg.time_exceeded_replies,
         )
         for obj in objs:
             print(json.dumps(obj))
     elif format == OutputFormat.Table:
-        print(format_table(dminer.time_exceeded_replies()))
+        print(format_table(alg.time_exceeded_replies))
     else:
-        print(format_traceroute(dminer.time_exceeded_replies()))
+        print(format_traceroute(alg.time_exceeded_replies))

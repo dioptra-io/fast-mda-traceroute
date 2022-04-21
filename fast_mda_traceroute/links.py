@@ -7,7 +7,7 @@ from pycaracal import Reply
 from fast_mda_traceroute.typing import Flow, Link, Pair
 
 
-def group_replies_by_flow(replies: List[Reply]) -> Dict[Flow, List[Reply]]:
+def get_replies_by_flow(replies: List[Reply]) -> Dict[Flow, List[Reply]]:
     return map_reduce(
         replies,
         lambda x: (
@@ -19,15 +19,15 @@ def group_replies_by_flow(replies: List[Reply]) -> Dict[Flow, List[Reply]]:
     )
 
 
-def group_replies_by_ttl(replies: List[Reply]) -> Dict[int, List[Reply]]:
+def get_replies_by_ttl(replies: List[Reply]) -> Dict[int, List[Reply]]:
     return map_reduce(replies, lambda x: x.probe_ttl)  # type: ignore
 
 
 def get_pairs_by_flow(replies: List[Reply]) -> Dict[Flow, List[Pair]]:
     pairs_by_flow = defaultdict(list)
-    replies_by_flow = group_replies_by_flow(replies)
+    replies_by_flow = get_replies_by_flow(replies)
     for flow, replies in replies_by_flow.items():
-        replies_by_ttl = group_replies_by_ttl(replies)
+        replies_by_ttl = get_replies_by_ttl(replies)
         for near_ttl in range(min(replies_by_ttl), max(replies_by_ttl)):
             near_replies = replies_by_ttl.get(near_ttl, [None])
             far_replies = replies_by_ttl.get(near_ttl + 1, [None])
@@ -59,9 +59,9 @@ def get_scamper_links(
     links: Dict[str, Dict[int, Dict[Optional[str], List[Reply]]]] = defaultdict(
         lambda: defaultdict(lambda: defaultdict(list))
     )
-    replies_by_flow = group_replies_by_flow(replies)
+    replies_by_flow = get_replies_by_flow(replies)
     for flow, flow_replies in replies_by_flow.items():
-        replies_by_ttl = group_replies_by_ttl(flow_replies)
+        replies_by_ttl = get_replies_by_ttl(flow_replies)
         for near_ttl in range(min(replies_by_ttl), max(replies_by_ttl)):
             # TODO: Handle per-packet load-balancing.
             far_ttl = near_ttl + 1

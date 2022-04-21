@@ -1,6 +1,6 @@
 from collections import defaultdict
 from random import shuffle
-from typing import Dict, List
+from typing import Dict, List, Set
 
 from diamond_miner.generators import probe_generator
 from diamond_miner.mappers import SequentialFlowMapper
@@ -10,6 +10,7 @@ from more_itertools import flatten
 from pycaracal import Reply
 
 from fast_mda_traceroute.links import get_links_by_ttl
+from fast_mda_traceroute.typing import Link
 from fast_mda_traceroute.utils import is_ipv4
 
 
@@ -42,17 +43,27 @@ class DiamondMiner:
         # Diamond-Miner state
         self.current_round = 0
         self.probes_sent: Dict[int, int] = defaultdict(int)
-        self.replies: Dict[int, List[Reply]] = {}
+        self.replies_by_round: Dict[int, List[Reply]] = {}
 
-    def all_replies(self) -> List[Reply]:
-        return list(flatten(self.replies.values()))
+    @property
+    def links_by_ttl(self) -> Dict[int, Set[Link]]:
+        return get_links_by_ttl(self.time_exceeded_replies)
 
+    @property
+    def links(self) -> Set[Link]:
+        return set(flatten(self.links_by_ttl.values()))
+
+    @property
+    def replies(self) -> List[Reply]:
+        return list(flatten(self.replies_by_round.values()))
+
+    @property
     def time_exceeded_replies(self) -> List[Reply]:
-        return [x for x in self.all_replies() if x.time_exceeded]
+        return [x for x in self.replies if x.time_exceeded]
 
     def next_round(self, replies: List[Reply]) -> List[Probe]:
         self.current_round += 1
-        self.replies[self.current_round] = replies
+        self.replies_by_round[self.current_round] = replies
 
         if self.current_round > self.max_round:
             return []
@@ -66,9 +77,8 @@ class DiamondMiner:
             }
         else:
             # TODO: Detect loop+amplification
-            links_by_ttl = get_links_by_ttl(self.time_exceeded_replies())
             flows_by_ttl = {}
-            for ttl, links in links_by_ttl.items():
+            for ttl, links in self.links_by_ttl.items():
                 # TODO: Full/Lite MDA; see Multilevel MDA-Lite paper.
                 max_flow = stopping_point(len(links) + 1, self.failure_probability)
                 flows_by_ttl[ttl] = range(self.probes_sent[ttl], max_flow)
