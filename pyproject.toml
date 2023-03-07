@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fast-mda-traceroute"
-version = "0.1.11"
+version = "0.1.12"
 description = "An experimental multipath traceroute tool."
 authors = ["Maxime Mouchet <maxime.mouchet@lip6.fr>"]
 license = "MIT"
