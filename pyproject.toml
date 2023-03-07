@@ -8,12 +8,12 @@ readme = "README.md"
 homepage = "https://github.com/dioptra-io/fast-mda-traceroute"
 
 [tool.poetry.dependencies]
-python = "^3.8"
-diamond-miner = "^0.9.1"
+python = "^3.10"
+diamond-miner = "^1.0.3"
 more-itertools = "^8.12.0"
-pycaracal = "^0.10.1"
 tabulate = "^0.8.9"
 typer = "^0.4.0"
+pycaracal = "^0.14.4"
 
 [tool.poetry.dev-dependencies]
 bumpversion = "^0.6.0"
