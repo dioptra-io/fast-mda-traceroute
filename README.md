@@ -71,7 +71,7 @@ docker run fast-mda-traceroute --help
 
 [coverage-url]: https://codecov.io/gh/dioptra-io/fast-mda-traceroute
 
-[tests-workflow-badge]: https://img.shields.io/github/workflow/status/dioptra-io/fast-mda-traceroute/Tests?logo=github&label=tests
+[tests-workflow-badge]: https://img.shields.io/github/actions/workflow/status/dioptra-io/fast-mda-traceroute/tests.yml?logo=github&label=tests
 
 [tests-workflow-url]: https://github.com/dioptra-io/fast-mda-traceroute/actions/workflows/tests.yml
 
