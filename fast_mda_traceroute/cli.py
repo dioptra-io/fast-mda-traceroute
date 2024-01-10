@@ -71,10 +71,10 @@ def main(
         OutputFormat.Table.value,
         help="Output format.",
     ),
-    confidence: int = typer.Option(
-        95,
-        min=0,
-        max=99,
+    confidence: float = typer.Option(
+        95.0,
+        min=0.0,
+        max=99.99,
         metavar="CONFIDENCE",
         help="Probability of discovering all the nodes at a given in TTL, in percent.",
     ),

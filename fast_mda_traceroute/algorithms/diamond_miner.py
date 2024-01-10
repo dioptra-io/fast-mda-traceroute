@@ -4,8 +4,8 @@ from typing import Dict, List, Set
 
 from diamond_miner.generators import probe_generator
 from diamond_miner.mappers import SequentialFlowMapper
-from diamond_miner.mda import stopping_point
 from diamond_miner.typing import Probe
+from utils.stopping_point import stopping_point
 from more_itertools import flatten
 from pycaracal import Reply
 
@@ -25,12 +25,12 @@ class DiamondMiner:
         src_port: int,
         dst_port: int,
         protocol: str,
-        confidence: int,
+        confidence: float,
         max_round: int,
     ):
         if protocol == "icmp" and not is_ipv4(dst_addr):
             protocol = "icmp6"
-        self.failure_probability = 1 - (confidence / 100)
+        self.failure_probability = 1.0 - (confidence / 100.0)
         self.dst_addr = dst_addr
         self.min_ttl = min_ttl
         self.max_ttl = max_ttl
@@ -80,7 +80,11 @@ class DiamondMiner:
             flows_by_ttl = {}
             for ttl, links in self.links_by_ttl.items():
                 # TODO: Full/Lite MDA; see Multilevel MDA-Lite paper.
-                max_flow = stopping_point(len(links) + 1, self.failure_probability)
+
+                # we found len(links) interfaces for this router
+                # the minimal number of probes to send to be sure we found them all
+                # is defined by the local stopping point routine
+                max_flow = stopping_point(len(links), self.failure_probability)
                 flows_by_ttl[ttl] = range(self.probes_sent[ttl], max_flow)
             # TODO: Maximum over TTL (h-1, h); cf. Diamond-Miner paper `Proposition 1`.
 
