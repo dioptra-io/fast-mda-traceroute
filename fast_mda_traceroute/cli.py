@@ -245,7 +245,7 @@ def main(
             start_time,
             stop_time,
             alg.probes_sent,
-            alg.time_exceeded_replies,
+            alg.time_exceeded_replies + alg.destination_unreachable_replies,
         )
         for obj in objs:
             print(json.dumps(obj))

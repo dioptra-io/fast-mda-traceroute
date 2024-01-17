@@ -60,6 +60,10 @@ class DiamondMiner:
     @property
     def time_exceeded_replies(self) -> List[Reply]:
         return [x for x in self.replies if x.time_exceeded]
+    
+    @property
+    def destination_unreachable_replies(self) -> List[Reply]:
+        return [x for x in self.replies if x.destination_unreachable]
 
     def next_round(self, replies: List[Reply]) -> List[Probe]:
         self.current_round += 1
