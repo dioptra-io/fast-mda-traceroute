@@ -47,7 +47,7 @@ class DiamondMiner:
 
     @property
     def links_by_ttl(self) -> Dict[int, Set[Link]]:
-        return get_links_by_ttl(self.time_exceeded_replies)
+        return get_links_by_ttl(self.time_exceeded_replies + self.destination_unreachable_replies)
 
     @property
     def links(self) -> Set[Link]:
