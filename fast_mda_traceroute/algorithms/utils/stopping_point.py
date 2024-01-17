@@ -45,16 +45,3 @@ def stopping_point_rec(n_interfaces: int, failure_probability: float) -> int:
         n_probes += 1
     
     return n_probes
-
-def legacy_reach_prob(total_interfaces: int, n_probes: int) -> float:
-    big_sum = sum( comb(total_interfaces, i) * (i**n_probes) * (-1)**(total_interfaces -i -1) for i in range(total_interfaces) )
-    return 1 - big_sum / total_interfaces ** n_probes
-
-
-def stopping_point(n_interfaces: int, failure_probability: float) -> int:
-    n_probes = 0
-
-    while legacy_reach_prob(n_interfaces, n_probes) < (1 - failure_probability):
-        n_probes += 1
-    
-    return n_probes

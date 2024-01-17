@@ -5,10 +5,10 @@ from typing import Dict, List, Set
 from diamond_miner.generators import probe_generator
 from diamond_miner.mappers import SequentialFlowMapper
 from diamond_miner.typing import Probe
-from utils.stopping_point import stopping_point
 from more_itertools import flatten
 from pycaracal import Reply
 
+from fast_mda_traceroute.algorithms.utils.stopping_point import stopping_point
 from fast_mda_traceroute.links import get_links_by_ttl
 from fast_mda_traceroute.typing import Link
 from fast_mda_traceroute.utils import is_ipv4
@@ -47,7 +47,7 @@ class DiamondMiner:
 
     @property
     def links_by_ttl(self) -> Dict[int, Set[Link]]:
-        return get_links_by_ttl(self.time_exceeded_replies + self.destination_unreachable_replies)
+        return get_links_by_ttl(self.time_exceeded_replies)
 
     @property
     def links(self) -> Set[Link]:
@@ -64,6 +64,10 @@ class DiamondMiner:
     @property
     def destination_unreachable_replies(self) -> List[Reply]:
         return [x for x in self.replies if x.destination_unreachable]
+
+    @property
+    def echo_replies(self) -> List[Reply]:
+        return [x for x in self.replies if x.echo_reply]
 
     def next_round(self, replies: List[Reply]) -> List[Probe]:
         self.current_round += 1
