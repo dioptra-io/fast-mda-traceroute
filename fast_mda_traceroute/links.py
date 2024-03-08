@@ -37,6 +37,25 @@ def get_pairs_by_flow(replies: List[Reply]) -> Dict[Flow, List[Pair]]:
     return pairs_by_flow
 
 
+def get_links_by_flow_by_ttl(replies: List[Reply]) -> Dict[int, Dict[Flow, Set[Link]]]:
+    links_by_ttl = defaultdict(dict)
+    pairs_by_flow = get_pairs_by_flow(replies)
+    for flow, pairs in pairs_by_flow.items():
+        for near_ttl, near_reply, far_reply in pairs:
+            if near_reply:
+                links_ttl = links_by_ttl[near_ttl]
+                if near_reply.reply_src_addr not in links_ttl:
+                    links_ttl[near_reply.reply_src_addr] = set()
+                links_by_ttl[near_ttl][near_reply.reply_src_addr].add(
+                    (
+                        near_ttl,
+                        near_reply.reply_src_addr if near_reply else None,
+                        far_reply.reply_src_addr if far_reply else None,
+                    )
+                )
+    return links_by_ttl
+
+
 def get_links_by_ttl(replies: List[Reply]) -> Dict[int, Set[Link]]:
     links_by_ttl = defaultdict(set)
     pairs_by_flow = get_pairs_by_flow(replies)
