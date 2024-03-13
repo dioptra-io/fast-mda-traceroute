@@ -15,7 +15,6 @@ from fast_mda_traceroute.typing import Link
 from fast_mda_traceroute.utils import is_ipv4
 
 
-
 class DiamondMiner:
     """A standalone, in-memory, version of Diamond-Miner."""
 
@@ -78,11 +77,12 @@ class DiamondMiner:
         # a routine to fetch the number of replies from a given node at a given TTL
         # NOTE: a node may appear at multiple TTLs
         def node_replies(node, ttl):
-            return len([
-                r
-                for r in self.time_exceeded_replies
-                if r.reply_src_addr == node and r.probe_ttl == ttl
-            ]
+            return len(
+                [
+                    r
+                    for r in self.time_exceeded_replies
+                    if r.reply_src_addr == node and r.probe_ttl == ttl
+                ]
             )
 
         # total number of observations of links reaching nodes at the current ttl.
@@ -133,7 +133,7 @@ class DiamondMiner:
 
             # the minimum number of probes to send to confirm we got all successors
             # We try to dismiss the hypothesis that there are more successors than we observed
-            n_k = stopping_point(n_successors + 1, self.failure_probability)
+            n_k = stopping_point(n_successors, self.failure_probability)
 
             # number of outgoing probes that went through the node
             n_probes = len([x for x in self.links_by_ttl[ttl] if x[1] == node])
@@ -169,7 +169,7 @@ class DiamondMiner:
 
             # we could send only one probe per TTL, but that would not resolve any node.
             # max_flow = 1
-            max_flow = stopping_point(2, self.failure_probability)
+            max_flow = stopping_point(1, self.failure_probability)
             max_flows_by_ttl = {
                 ttl: max_flow for ttl in range(self.min_ttl, self.max_ttl + 1)
             }
@@ -185,9 +185,8 @@ class DiamondMiner:
         # we take the max of both values.
 
         def combined_max_flow(ttl):
-            return max(
-                max_flows_by_ttl[ttl], max_flows_by_ttl.get(ttl - 1, 0)
-            )
+            return max(max_flows_by_ttl[ttl], max_flows_by_ttl.get(ttl - 1, 0))
+
         flows_by_ttl = {
             ttl: range(self.probes_sent[ttl], combined_max_flow(ttl))
             for ttl in range(self.min_ttl, self.max_ttl + 1)
