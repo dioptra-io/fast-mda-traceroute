@@ -23,7 +23,3 @@ def stopping_point(n_interfaces: int, failure_probability: float) -> int:
 
     return n_probes
 
-
-for n in range(1, 10):
-    s = stopping_point(n, 0.05)
-    print(f"stopping_point({n}, 0.95)={s}")
