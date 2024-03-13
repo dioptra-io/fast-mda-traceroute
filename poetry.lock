@@ -466,13 +466,13 @@ setuptools = "*"
 
 [[package]]
 name = "packaging"
-version = "23.2"
+version = "24.0"
 description = "Core utilities for Python packages"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "packaging-23.2-py3-none-any.whl", hash = "sha256:8c491190033a9af7e1d931d0b5dacc2ef47509b34dd0de67ed209b5203fc88c7"},
-    {file = "packaging-23.2.tar.gz", hash = "sha256:048fb0e9405036518eaaf48a55953c750c11e1a1b68e0dd1a9d62ed0c092cfc5"},
+    {file = "packaging-24.0-py3-none-any.whl", hash = "sha256:2ddfb553fdf02fb784c234c7ba6ccc288296ceabec964ad2eae3777778130bc5"},
+    {file = "packaging-24.0.tar.gz", hash = "sha256:eb82c5e3e56209074766e6885bb04b8c38a0c015d0a30036ebe7ece34c9989e9"},
 ]
 
 [[package]]
@@ -525,20 +525,28 @@ virtualenv = ">=20.10.0"
 
 [[package]]
 name = "pycaracal"
-version = "0.14.7"
+version = "0.14.5"
 description = ""
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pycaracal-0.14.7-cp310-cp310-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:fc42adeec99f199df4f44cac7a56373e2c2b8c685a980e6f74396b540a913c04"},
-    {file = "pycaracal-0.14.7-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:83ccd2c25e4908e7f505f674a07a46083e37090450299074acb6b2e93f4183fc"},
-    {file = "pycaracal-0.14.7-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:11e0bd6b9802bfac9daa44dcc414b8d456db7879693a47b3fc1dc4c5d40fec98"},
-    {file = "pycaracal-0.14.7-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:bf40dd2e7012c76aab634bfca5e4af3dfdef02d834ce3bb0eab19acc0887c365"},
-    {file = "pycaracal-0.14.7-cp38-cp38-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:c3873178f3146b6a788f4da65ba65ccd1f744ea88e5063701838b43f4b87da12"},
-    {file = "pycaracal-0.14.7-cp38-cp38-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:ee70473bd1e2e8bbea18328363530a5b13223e159c23504de0f1e0155b3727fd"},
-    {file = "pycaracal-0.14.7-cp39-cp39-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:37db72ebad77334a1075b5a92528867d5261b802dd3ed175cc2cc2e610d2b369"},
-    {file = "pycaracal-0.14.7-cp39-cp39-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c5e23895b60d6ca10f3167e7d57d0c841e6ba721d4fb3a4a3f80915cc95da7c4"},
-    {file = "pycaracal-0.14.7.tar.gz", hash = "sha256:13bcf4b7342d88d861723c1e5b91ca632f76d2011df73fc0fd58054b95a517d6"},
+    {file = "pycaracal-0.14.5-cp310-cp310-macosx_10_15_x86_64.whl", hash = "sha256:d7bfc919f0f7b05f0631159a1a3294b4d3af07e9d1af16e772c25e8d2d13f609"},
+    {file = "pycaracal-0.14.5-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:982750be1853274d977e4163dbe256950064f1c9c44c97ae2370b246abadc205"},
+    {file = "pycaracal-0.14.5-cp310-cp310-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:1ef22c1aeeed7ef54de8f1b73f05a4221b8d605745e9ca4ac03f0abcf7174dbf"},
+    {file = "pycaracal-0.14.5-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:5ed894eebd2d44c139a760021eb1b3b2af70a92de45ceace8791eb204e840979"},
+    {file = "pycaracal-0.14.5-cp311-cp311-macosx_10_15_x86_64.whl", hash = "sha256:fa5cb4256b7e335be8c7043affeab63332323f8a7388558a43fd29050539bb6b"},
+    {file = "pycaracal-0.14.5-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:0168094057e00e00f335e5adc2cf10444cdce141c4b01ff79324bbc336a67ee3"},
+    {file = "pycaracal-0.14.5-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:754c1ea631c394215a3620aa0e82cbbbd77b2ebfc85d64674c9dd8238ffc54d6"},
+    {file = "pycaracal-0.14.5-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:730b0dd5d734076fe684a006af2afaed55d40d4ed7a243b1af6943a2d4ad6ea1"},
+    {file = "pycaracal-0.14.5-cp38-cp38-macosx_10_15_x86_64.whl", hash = "sha256:7758902c5f923c758c54c171f97f9022d7084407d41a7688f0ec36d53b93457a"},
+    {file = "pycaracal-0.14.5-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:3921cbe321f34f650b02f53a5c5d675c3ae43ed4ec4bfdcd3dd073007b771476"},
+    {file = "pycaracal-0.14.5-cp38-cp38-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:db0eae35c2f76735bdb2427116029fb97bb651d3b3b9e350d676d393a6875521"},
+    {file = "pycaracal-0.14.5-cp38-cp38-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:41422868968a6e805c8933c4043bb664b96996864b4bbfe131129356f3847962"},
+    {file = "pycaracal-0.14.5-cp39-cp39-macosx_10_15_x86_64.whl", hash = "sha256:1fb5a407d3ce5793ed1d7659954230d2d341df5a7782bf08da20e5fbedb57907"},
+    {file = "pycaracal-0.14.5-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:159b93629f0e62b774ae06e6030df6999919e61378b5289bcc17c5d676c74cf1"},
+    {file = "pycaracal-0.14.5-cp39-cp39-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:49fb72070e0a75380e642876bb89522271a8fd0cbfe0145a8c815e7808d720f0"},
+    {file = "pycaracal-0.14.5-cp39-cp39-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:af8129cab7c9784ba7587652f703d110343a33dbd219831a9e47e11ff72cecaa"},
+    {file = "pycaracal-0.14.5.tar.gz", hash = "sha256:5b94de329627326022b4bc161d81e9050564d1034ac2338357d4760805f5d403"},
 ]
 
 [[package]]
@@ -710,32 +718,6 @@ files = [
     {file = "PyYAML-6.0.1-cp39-cp39-win32.whl", hash = "sha256:faca3bdcf85b2fc05d06ff3fbc1f83e1391b3e724afa3feba7d13eeab355484c"},
     {file = "PyYAML-6.0.1-cp39-cp39-win_amd64.whl", hash = "sha256:510c9deebc5c0225e8c96813043e62b680ba2f9c50a08d3724c7f28a747d1486"},
     {file = "PyYAML-6.0.1.tar.gz", hash = "sha256:bfdf460b1736c775f2ba9f6a92bca30bc2095067b8a9d77876d1fad6cc3b4a43"},
-]
-
-[[package]]
-name = "ruff"
-version = "0.3.1"
-description = "An extremely fast Python linter and code formatter, written in Rust."
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "ruff-0.3.1-py3-none-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:6b82e3937d0d76554cd5796bc3342a7d40de44494d29ff490022d7a52c501744"},
-    {file = "ruff-0.3.1-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:ae7954c8f692b70e6a206087ae3988acc9295d84c550f8d90b66c62424c16771"},
-    {file = "ruff-0.3.1-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6b730f56ccf91225da0f06cfe421e83b8cc27b2a79393db9c3df02ed7e2bbc01"},
-    {file = "ruff-0.3.1-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:c78bfa85637668f47bd82aa2ae17de2b34221ac23fea30926f6409f9e37fc927"},
-    {file = "ruff-0.3.1-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:d6abaad602d6e6daaec444cbf4d9364df0a783e49604c21499f75bb92237d4af"},
-    {file = "ruff-0.3.1-py3-none-manylinux_2_17_ppc64.manylinux2014_ppc64.whl", hash = "sha256:5f0c21b6914c3c9a25a59497cbb1e5b6c2d8d9beecc9b8e03ee986e24eee072e"},
-    {file = "ruff-0.3.1-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:434c3fc72e6311c85cd143c4c448b0e60e025a9ac1781e63ba222579a8c29200"},
-    {file = "ruff-0.3.1-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:78a7025e6312cbba496341da5062e7cdd47d95f45c1b903e635cdeb1ba5ec2b9"},
-    {file = "ruff-0.3.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:52b02bb46f1a79b0c1fa93f6495bc7e77e4ef76e6c28995b4974a20ed09c0833"},
-    {file = "ruff-0.3.1-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:11b5699c42f7d0b771c633d620f2cb22e727fb226273aba775a91784a9ed856c"},
-    {file = "ruff-0.3.1-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:54e5dca3e411772b51194b3102b5f23b36961e8ede463776b289b78180df71a0"},
-    {file = "ruff-0.3.1-py3-none-musllinux_1_2_i686.whl", hash = "sha256:951efb610c5844e668bbec4f71cf704f8645cf3106e13f283413969527ebfded"},
-    {file = "ruff-0.3.1-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:09c7333b25e983aabcf6e38445252cff0b4745420fc3bda45b8fce791cc7e9ce"},
-    {file = "ruff-0.3.1-py3-none-win32.whl", hash = "sha256:d937f9b99ebf346e0606c3faf43c1e297a62ad221d87ef682b5bdebe199e01f6"},
-    {file = "ruff-0.3.1-py3-none-win_amd64.whl", hash = "sha256:c0318a512edc9f4e010bbaab588b5294e78c5cdc9b02c3d8ab2d77c7ae1903e3"},
-    {file = "ruff-0.3.1-py3-none-win_arm64.whl", hash = "sha256:d3b60e44240f7e903e6dbae3139a65032ea4c6f2ad99b6265534ff1b83c20afa"},
-    {file = "ruff-0.3.1.tar.gz", hash = "sha256:d30db97141fc2134299e6e983a6727922c9e03c031ae4883a6d69461de722ae7"},
 ]
 
 [[package]]
@@ -946,4 +928,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "ab4c19415a1f70cea81404f4ca5e719a23073eacc951c918839080323def040f"
+content-hash = "a1775a23618b2a095d93a028684369c0faffccae7f4ccdd18ac0ef165d272e55"
