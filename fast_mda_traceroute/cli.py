@@ -5,6 +5,8 @@ import sys
 from datetime import datetime
 from random import randint
 from typing import List, Optional
+from collections import Counter
+from sparklines import sparklines
 
 import pycaracal
 import typer
@@ -44,6 +46,19 @@ def version_callback(value: bool):
         raise typer.Exit()
 
 
+def fancy_log(max_ttl, alg, probes):
+    unresolved = [alg.n_unresolved[ttl] for ttl in range(max_ttl + 1)]
+    logger.info("unresolved=%s", "".join(sparklines(unresolved)))
+    c = Counter(p.ttl for p in probes)
+    sending = [c[ttl] for ttl in range(max_ttl + 1)]
+    logger.info("sending...=%s", "".join(sparklines(sending)))
+    shape = []
+    for ttl in range(max_ttl + 1):
+        size = len(set(alg.links_by_ttl[ttl]))
+        shape.append(size)
+    logger.info("shape....=%s", "".join(sparklines(shape)))
+
+
 @app.command()
 def main(
     af: AddressFamily = typer.Option(
@@ -71,10 +86,10 @@ def main(
         OutputFormat.Table.value,
         help="Output format.",
     ),
-    confidence: int = typer.Option(
-        95,
-        min=0,
-        max=99,
+    confidence: float = typer.Option(
+        95.0,
+        min=0.0,
+        max=99.99,
         metavar="CONFIDENCE",
         help="Probability of discovering all the nodes at a given in TTL, in percent.",
     ),
@@ -218,17 +233,24 @@ def main(
     last_replies: List[Reply] = []
     while True:
         probes = [Probe(*x) for x in alg.next_round(last_replies)]
+        total_ips = set(r.reply_src_addr for r in alg.replies)
         logger.info(
-            "round=%d links_found=%d probes=%d expected_time=%.1fs",
+            "round=%d links_found=%d total_ip=%d probes=%d expected_time=%.1fs",
             alg.current_round,
             len(alg.links),
+            len(total_ips),
             len(probes),
             len(probes) / probing_rate,
         )
+        fancy_log(max_ttl, alg, probes)
         if not probes:
             break
         last_replies = prober.probe(probes, wait)
     stop_time = datetime.now()
+
+    relevant_replies = alg.time_exceeded_replies + [
+        r for r in alg.echo_replies if r.reply_src_addr == destination
+    ]
 
     if format == OutputFormat.ScamperJSON:
         objs = format_scamper_json(
@@ -245,11 +267,13 @@ def main(
             start_time,
             stop_time,
             alg.probes_sent,
-            alg.time_exceeded_replies,
+            relevant_replies,
         )
         for obj in objs:
             print(json.dumps(obj))
     elif format == OutputFormat.Table:
+        # TODO: set relevant replies here
         print(format_table(alg.time_exceeded_replies))
     else:
+        # TODO: set relevant replies here
         print(format_traceroute(alg.time_exceeded_replies))

@@ -13,7 +13,8 @@ diamond-miner = "^1.0.3"
 more-itertools = "^8.12.0"
 tabulate = "^0.8.9"
 typer = "^0.4.0"
-pycaracal = "^0.14.5"
+pycaracal = "0.14.5"
+sparklines = "^0.4.2"
 
 [tool.poetry.dev-dependencies]
 bumpversion = "^0.6.0"
@@ -42,7 +43,7 @@ exclude_lines = [
     "if __name__ == \"__main__\":$",
     "pass$",
     "\\s\\.\\.\\.$",
-    "raise NotImplementedError$"
+    "raise NotImplementedError$",
 ]
 
 [build-system]
